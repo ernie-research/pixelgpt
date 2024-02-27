@@ -21,7 +21,7 @@ export BSZ=4
 export GRAD_ACCUM=8  # We found that higher batch sizes can sometimes make training more stable
 export LR=3e-5
 export SEED=42
-export EPOCHS=2
+export EPOCHS=3
 
 export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
 
@@ -47,16 +47,17 @@ python scripts/training/run_ernie-pixel_glue.py \
   --per_device_train_batch_size=${BSZ} \
   --gradient_accumulation_steps=${GRAD_ACCUM} \
   --learning_rate=${LR} \
+  --warmup_steps=10 \
   --run_name=${RUN_NAME} \
   --output_dir=${RUN_NAME} \
   --overwrite_output_dir \
   --overwrite_cache \
   --logging_strategy=steps \
-  --logging_steps=1 \
+  --logging_steps=10 \
   --evaluation_strategy=steps \
-  --eval_steps=1 \
+  --eval_steps=100 \
   --save_strategy=steps \
-  --save_steps=1 \
+  --save_steps=100 \
   --report_to=tensorboard \
   --log_predictions \
   --fp16 \
