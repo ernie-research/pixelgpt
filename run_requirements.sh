@@ -15,6 +15,7 @@ pip install torch==1.13.1 torchvision
 export https_proxy=http://172.19.57.45:3128;export http_proxy=http://172.19.57.45:3128
 git clone https://github.com/huggingface/evaluate.git
 unset https_proxy;unset http_proxy
+cd evaluate && pip install -e .
 
 # 安装tensorboard
 pip install tensorboard
