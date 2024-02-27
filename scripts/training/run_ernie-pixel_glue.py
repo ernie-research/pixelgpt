@@ -292,15 +292,6 @@ def get_model_and_config(model_args: argparse.Namespace, num_labels: int, task_n
         "use_auth_token": model_args.use_auth_token if model_args.use_auth_token else None,
     }
 
-    # config = AutoConfig.from_pretrained(
-    #     model_args.config_name if model_args.config_name else model_args.model_name_or_path,
-    #     num_labels=num_labels,
-    #     finetuning_task=task_name,
-    #     attention_probs_dropout_prob=model_args.dropout_prob,
-    #     hidden_dropout_prob=model_args.dropout_prob,
-    #     **config_kwargs,
-    # )
-
     if model_args.model_type is None:
         config = AutoConfig.from_pretrained(
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
@@ -406,7 +397,7 @@ def get_preprocess_fn(
                 if sentence2_key is None
                 else (examples[sentence1_key], examples[sentence2_key])
             )
-            result = processor(*args, padding="max_length", max_length=data_args.max_seq_length, truncation=True)
+            result = processor(*args, padding=True, max_length=data_args.max_seq_length, truncation=True)
 
             if "label" in examples:
                 result["label"] = [l for l in examples["label"]]

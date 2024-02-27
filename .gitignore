@@ -1,3 +1,5 @@
 pretrained_models/
 sst2-test/
 evaluate/
+test/
+wandb/
