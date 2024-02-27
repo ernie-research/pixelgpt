@@ -600,8 +600,8 @@ def main():
             raise ValueError("--do_train requires a train dataset")
         train_dataset = raw_datasets["train"]
         # debug ###############################################################
-        print("train dataset debug")
-        train_dataset = raw_datasets["train"].select(range(32))
+        # print("train dataset debug")
+        # train_dataset = raw_datasets["train"].select(range(32))
         #######################################################################
         if data_args.max_train_samples is not None:
             train_dataset = train_dataset.select(range(data_args.max_train_samples))
