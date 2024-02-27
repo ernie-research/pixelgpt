@@ -1,0 +1,61 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--model_name_or_path=/root/paddlejob/workspace/liuqingyi01/code/pixel/pretrained_models/ernie-pixel-abl-pixel-only/checkpoint-51750",
+                "--model_type=ernie-pixel",
+                "--processor_name=/root/paddlejob/workspace/liuqingyi01/code/pixel/renderers/noto_renderer",
+                "--task_name=sst2",
+                "--rendering_backend=pygame",
+                "--pooling_mode=mean",
+                "--pooler_add_layer_norm=True",
+                "--remove_unused_columns=False",
+                "--do_train",
+                "--do_eval",
+                "--do_predict",
+                "--dropout_prob=0.1",
+                "--max_seq_length=256",
+                "--max_steps=10",
+                "--num_train_epochs=1",
+                "--early_stopping",
+                "--early_stopping_patience=5",
+                "--per_device_train_batch_size=2",
+                "--gradient_accumulation_steps=4",
+                "--learning_rate=3e-5",
+                "--warmup_steps=0",
+                "--run_name=sst2-test",
+                "--output_dir=sst2-test",
+                "--overwrite_output_dir",
+                "--overwrite_cache",
+                "--logging_strategy=steps",
+                "--logging_steps=1",
+                "--evaluation_strategy=steps",
+                "--eval_steps=5",
+                "--save_strategy=steps",
+                "--save_steps=5",
+                // "--save_total_limit=5",
+                "--report_to=tensorboard",
+                "--log_predictions",
+                "--load_best_model_at_end=True",
+                "--metric_for_best_model=eval_accuracy",
+                // "--fp16",
+                // "--half_precision_backend=auto",
+                "--seed=42"
+            ],
+            "env": {
+                "PYTHONPATH": "/root/paddlejob/workspace/liuqingyi01/code/pixel/src/",
+                "CUDA_VISIBLE_DEVICES": "0",
+            }
+        }
+    ]
+}
