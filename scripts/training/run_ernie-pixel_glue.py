@@ -812,8 +812,10 @@
 """ Finetuning the library models for sequence classification on GLUE."""
 
 import argparse
+from base64 import b64decode
 import copy
 from io import BytesIO
+import io
 import logging
 import os
 import random
@@ -956,6 +958,10 @@ class DataTrainingArguments:
         default=None, metadata={"help": "A csv or a json file containing the validation data."}
     )
     test_file: Optional[str] = field(default=None, metadata={"help": "A csv or a json file containing the test data."})
+    preprocessing_num_workers: Optional[int] = field(
+        default=None,
+        metadata={"help": "The number of processes to use for the preprocessing."},
+    )
 
     def __post_init__(self):
         if self.task_name is not None:
@@ -968,7 +974,7 @@ class DataTrainingArguments:
             raise ValueError("Need either a GLUE task, a training/validation file or a dataset name.")
         else:
             train_extension = self.train_file.split(".")[-1]
-            assert train_extension in ["csv", "json"], "`train_file` should be a csv or a json file."
+            assert train_extension in ["csv", "json", "gz"], "`train_file` should be a csv or a json file."
             validation_extension = self.validation_file.split(".")[-1]
             assert (
                 validation_extension == train_extension
@@ -1181,7 +1187,6 @@ def image_preprocess_fn(
 
     return example
 
-
 def get_preprocess_fn(
     data_args: argparse.Namespace,
     processor: Union[Union[PyGameTextRenderer, PangoCairoTextRenderer], PreTrainedTokenizerFast],
@@ -1195,27 +1200,14 @@ def get_preprocess_fn(
             do_resize=True,
             size=(processor.pixels_per_patch, processor.pixels_per_patch * processor.max_seq_length),
         )
-        format_fn = glue_strip_spaces
 
         
         def image_preprocess_fn(examples):
-            # import time
-            # start_time = time.time()
-            if sentence2_key:
-                encodings = [
-                    processor(text=(format_fn(a), format_fn(b)))
-                    for a, b in zip(examples[sentence1_key], examples[sentence2_key])
-                ]
-            else:
-                encodings = [processor(text=format_fn(a)) for a in examples[sentence1_key]]
+            examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
+            examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
+            examples["attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
 
-            examples["pixel_values"] = [transforms(Image.fromarray(e.pixel_values)) for e in encodings]
-            
-            examples["attention_mask"] = [
-                get_attention_mask(e.num_text_patches, seq_length=data_args.max_seq_length) for e in encodings
-            ]
-            # print(f"@@@ pixel data process time cost={time.time() - start_time}")
-
+            examples.pop("image")
             return examples
 
         preprocess_fn = image_preprocess_fn
@@ -1293,6 +1285,7 @@ def main():
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
+    # ================== Load Dataset ==================
     # Get the datasets: you can either provide your own CSV/JSON training and evaluation files (see below)
     # or specify a GLUE benchmark task (the dataset will be downloaded automatically from the datasets Hub).
     #
@@ -1316,7 +1309,7 @@ def main():
     else:
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
-        data_files = {"train": data_args.train_file, "validation": data_args.validation_file}
+        data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
 
         # Get the test dataset: you can provide your own CSV/JSON test file (see below)
         # when you use `do_predict` without specifying a GLUE benchmark task.
@@ -1342,6 +1335,8 @@ def main():
             raw_datasets = load_dataset("json", data_files=data_files, cache_dir=model_args.cache_dir)
     # See more about loading any type of standard or custom dataset at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
+
+
 
     # Labels
     if data_args.task_name is not None:
@@ -1428,6 +1423,40 @@ def main():
     preprocess_fn = get_preprocess_fn(data_args, processor, modality, (sentence1_key, sentence2_key))
     # ============================================
 
+    # # ======== 图像预处理函数 =======================
+    # if modality == Modality.IMAGE:
+    #     image_height = processor.pixels_per_patch
+    #     image_width = processor.pixels_per_patch * processor.max_seq_length
+    #     image_mean, image_std = (None, None)
+    #     transforms = get_transforms(
+    #         do_resize=True,
+    #         size=(image_height, image_width),
+    #         do_normalize=False,
+    #         image_mean=image_mean,
+    #         image_std=image_std,
+    #     )       
+    #     def pixel_preprocess_function(examples):
+    #         """Preprocess a batch of images by applying transforms."""
+            
+    #         examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
+    #         examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
+    #         examples["attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
+
+    #         return examples
+    # elif modality == Modality.TEXT:
+    #     def text_preprocess_fn(examples):
+    #         # Tokenize the texts
+    #         args = (
+    #             (examples[sentence1_key],)
+    #             if sentence2_key is None
+    #             else (examples[sentence1_key], examples[sentence2_key])
+    #         )
+    #         result = processor(*args, padding=True, max_length=data_args.max_seq_length, truncation=True)
+
+    #         if "label" in examples:
+    #             result["label"] = [l for l in examples["label"]]
+    #         return examples
+
     if training_args.do_train:
         if "train" not in raw_datasets:
             raise ValueError("--do_train requires a train dataset")
@@ -1440,107 +1469,24 @@ def main():
             train_dataset = train_dataset.select(range(data_args.max_train_samples))
         if modality == Modality.IMAGE:
             train_dataset.features["pixel_values"] = datasets.Image()
-        # train_dataset.set_transform(preprocess_fn)
-        if modality == Modality.TEXT:
-            train_dataset.set_transform(preprocess_fn)
-        else:
-            train_dataset = train_dataset.map(image_preprocess_fn, load_from_cache_file=False, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-            train_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
-            # pass
-
-        # ================== preprocess data and store in memory =====================
-        
-        ### Online
-        # train_dataset = train_dataset.map(image_preprocess_fn, batched=True, batch_size=1, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-        # train_dataset.set_transform(preprocess_fn)
-        # pixel_values_list = []
-        # attention_mask_list = []
-        # ### Modality.IMAGE
-        # from tqdm import tqdm
-        # lenth = len(train_dataset)
-        # for i in tqdm(range(lenth)):
-        #     data = train_dataset[i]
-        #     # print(data)
-        #     pixel_values = data["pixel_values"]
-        #     attention_mask = data["attention_mask"]
-            
-        #     pixel_values_list.append(pixel_values)
-        #     attention_mask_list.append(attention_mask)
-        
-        
-        # train_dataset.add_column("pixel_values", pixel_values_list)
-        # train_dataset.add_column("attention_mask", attention_mask_list)
-        # exit(0)
-
-        ### Offline
-        ### Modality.IMAGE
-        ##### 单进程
-        # from tqdm import tqdm
-        # import json
-        # from torchvision.transforms import ToPILImage, ToTensor
-        # from PIL import Image
-        # from base64 import b64encode, b64decode
-
-        # preprocessed_data = []
-        # lenth = len(train_dataset)
-
-        # for i in tqdm(range(lenth)):
-        #     data = train_dataset[i]
-        #     # print(data)
-        #     pixel_values = data["pixel_values"]
-
-
-        #     to_pil = ToPILImage()
-        #     image = to_pil(pixel_values)
-            
-        #     # image = pixel_values
-        #     with BytesIO() as image_stream:
-        #         image.save(image_stream, format='PNG')
-        #         base64_encoded = b64encode(image_stream.getvalue()).decode('utf-8')
-        #     data['image'] = base64_encoded
-
-        #     # ### debug decoded
-        #     # to_tensor = ToTensor()
-        #     # decoded_image = Image.open(BytesIO(b64decode(data["image"])))
-        #     # decoded_pixel_values = to_tensor(decoded_image)
-
-
-        #     data.pop('pixel_values')
-
-        #     data['attention_mask'] = data['attention_mask'].tolist()
-        #     preprocessed_data.append(data)
-
-        ##### 多线程
-        # from concurrent.futures import ThreadPoolExecutor
-        # from tqdm import tqdm
-        # import json
-        # from torchvision.transforms import ToPILImage, ToTensor
-        # from PIL import Image
-        # from base64 import b64encode, b64decode
-        # from io import BytesIO
-
-        # def process_data(i):
-        #     data = train_dataset[i]
-        #     pixel_values = data["pixel_values"]
-
-        #     to_pil = ToPILImage()
-        #     image = to_pil(pixel_values)
-            
-        #     with BytesIO() as image_stream:
-        #         image.save(image_stream, format='PNG')
-        #         base64_encoded = b64encode(image_stream.getvalue()).decode('utf-8')
-        #     data['image'] = base64_encoded
-        #     data.pop('pixel_values')
-        #     data['attention_mask'] = data['attention_mask'].tolist()
-
-        #     return data
-        # with ThreadPoolExecutor(max_workers=32) as executor:
-        #     preprocessed_data = list(tqdm(executor.map(process_data, range(len(train_dataset))), total=len(train_dataset)))
-
-        # preprocessd_data_json = json.dumps(preprocessed_data, ensure_ascii=False)
-        # exit(0)
-        # ============================================================================
-
+        train_dataset.set_transform(preprocess_fn)
+        # if modality == Modality.IMAGE:
+        #     train_dataset = train_dataset.map(
+        #                 pixel_preprocess_function,
+        #                 batched=True,
+        #                 # num_proc=48,
+        #                 remove_columns="image",
+        #                 load_from_cache_file=False,
+        #                 desc="Running image preprocess on dataset",
+        #             )
+        # elif modality == Modality.TEXT:
+        #     train_dataset = train_dataset.map(
+        #                 text_preprocess_fn,
+        #                 batched=True,
+        #                 # num_proc=48,
+        #                 load_from_cache_file=False,
+        #                 desc="Running text preprocess on dataset",
+        #             )
 
     if training_args.do_eval:
         if "validation" not in raw_datasets and "validation_matched" not in raw_datasets:
@@ -1551,13 +1497,13 @@ def main():
         if modality == Modality.IMAGE:
             eval_dataset.features["pixel_values"] = datasets.Image()
         eval_examples = copy.deepcopy(eval_dataset)
-        # eval_dataset.set_transform(preprocess_fn)
+        eval_dataset.set_transform(preprocess_fn)
         # ======= Debug =============
-        if modality == Modality.TEXT:
-            eval_dataset.set_transform(preprocess_fn)
-        else:
-            eval_dataset = eval_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-            eval_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
+        # if modality == Modality.TEXT:
+        #     eval_dataset.set_transform(preprocess_fn)
+        # else:
+        #     eval_dataset = eval_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
+        #     eval_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
 
     if training_args.do_predict or data_args.task_name is not None or data_args.test_file is not None:
         if "test" not in raw_datasets and "test_matched" not in raw_datasets:
@@ -1567,13 +1513,13 @@ def main():
             predict_dataset = predict_dataset.select(range(data_args.max_predict_samples))
         if modality == Modality.IMAGE:
             predict_dataset.features["pixel_values"] = datasets.Image()
-        # predict_dataset.set_transform(preprocess_fn)
+        predict_dataset.set_transform(preprocess_fn)
         # ======= Debug =============
-        if modality == Modality.TEXT:
-            predict_dataset.set_transform(preprocess_fn)
-        else:
-            predict_dataset = predict_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-            predict_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
+        # if modality == Modality.TEXT:
+        #     predict_dataset.set_transform(preprocess_fn)
+        # else:
+        #     predict_dataset = predict_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
+        #     predict_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
 
     # Log a few random samples from the training set:
     # if training_args.do_train:
@@ -1590,7 +1536,7 @@ def main():
         metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/glue/glue.py", data_args.task_name)
     else:
         # metric = load_metric("accuracy")
-        metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/accuracy.py")
+        metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/accuracy/accuracy.py")
 
     # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
