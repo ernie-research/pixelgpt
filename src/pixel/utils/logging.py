@@ -41,7 +41,8 @@ def log_sequence_classification_predictions(
                 sentence2 = ""
 
             if modality == Modality.IMAGE:
-                processed_input = wandb.Image(unpatchify(patchify(feature["pixel_values"])))
+                # processed_input = wandb.Image(unpatchify(patchify(feature["pixel_values"])))
+                processed_input = None
             elif modality == Modality.TEXT:
                 processed_input = feature["input_ids"]
             else:
