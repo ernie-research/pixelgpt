@@ -16,25 +16,27 @@ export PYTHONPATH=$PYTHONPATH:src/
 export TASK="rte"
 export MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
 export RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-export SEQ_LEN=1024
+export SEQ_LEN=768
 export BSZ=4
-export GRAD_ACCUM=8  # We found that higher batch sizes can sometimes make training more stable
+export GRAD_ACCUM=2  # We found that higher batch sizes can sometimes make training more stable
 export LR=3e-5
 export SEED=42
-export EPOCHS=3
+export EPOCHS=5
 
 export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
 
 
 # === DEBUG ===
-# export RUN_NAME=test
+# export RUN_NAME=test_preprocess-on-the-fly
 # =============
 
 python scripts/training/run_ernie-pixel_glue.py \
   --model_name_or_path=${MODEL} \
   --model_type=ernie-pixel \
   --processor_name=renderers/noto_renderer \
-  --task_name=${TASK} \
+  --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/rte-train/part-00000.gz \
+  --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/rte-validation/part-00000.gz \
+  --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/rte-test/part-00000.gz \
   --rendering_backend=${RENDERING_BACKEND} \
   --remove_unused_columns=False \
   --do_train \
@@ -47,20 +49,19 @@ python scripts/training/run_ernie-pixel_glue.py \
   --per_device_train_batch_size=${BSZ} \
   --gradient_accumulation_steps=${GRAD_ACCUM} \
   --learning_rate=${LR} \
-  --warmup_steps=10 \
   --run_name=${RUN_NAME} \
   --output_dir=${RUN_NAME} \
   --overwrite_output_dir \
   --overwrite_cache \
   --logging_strategy=steps \
-  --logging_steps=10 \
+  --logging_steps=1 \
   --evaluation_strategy=steps \
-  --eval_steps=100 \
+  --eval_steps=10 \
   --save_strategy=steps \
-  --save_steps=100 \
+  --save_steps=10 \
   --report_to=tensorboard \
   --log_predictions \
-  --fp16 \
   --load_best_model_at_end=True \
   --metric_for_best_model="eval_accuracy" \
+  --fp16 \
   --seed=${SEED}
