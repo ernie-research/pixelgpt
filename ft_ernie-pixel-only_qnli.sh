@@ -4,9 +4,6 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=0,2,3,4,5,6,7
-
-
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
 # A clear indicator of this is when the training loss is not decreasing substantially within the first 1k-3k steps
@@ -30,7 +27,11 @@ export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKE
 
 
 # === DEBUG ===
+<<<<<<< HEAD
 export RUN_NAME=test
+=======
+# export RUN_NAME=test
+>>>>>>> 79dfed23082b79c3f18ed77e00c2069a97dfdd97
 # =============
 
 python scripts/training/run_ernie-pixel_glue.py \
@@ -60,9 +61,15 @@ python scripts/training/run_ernie-pixel_glue.py \
   --logging_strategy=steps \
   --logging_steps=1 \
   --evaluation_strategy=steps \
+<<<<<<< HEAD
   --eval_steps=150 \
   --save_strategy=steps \
   --save_steps=150 \
+=======
+  --eval_steps=100 \
+  --save_strategy=steps \
+  --save_steps=100 \
+>>>>>>> 79dfed23082b79c3f18ed77e00c2069a97dfdd97
   --save_total_limit=1 \
   --report_to=tensorboard \
   --log_predictions \
