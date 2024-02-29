@@ -2477,7 +2477,7 @@ class ErniePixelForSequenceClassification(ErniePixelPreTrainedModel):
                     logits.device
                 )
             else:
-                sequence_lengths = attention_mask.sum(-1) - 1
+                sequence_lengths = attention_mask.sum(-1).long() - 1
 
         pooled_logits = logits[torch.arange(batch_size, device=logits.device), sequence_lengths]
 
