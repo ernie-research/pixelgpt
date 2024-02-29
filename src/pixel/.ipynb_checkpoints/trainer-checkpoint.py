@@ -45,11 +45,15 @@ class PIXELTrainer(Trainer):
         # Uncomment this to visualize inputs
         # debug_log_inputs(inputs)
 
+<<<<<<< HEAD
         from time import time
         start = time()
         outputs = model(**inputs)
         end = time()
         print(f"Time to run model: {end - start}")
+=======
+        outputs = model(**inputs)
+>>>>>>> 3b08ec1b124b1ebed96bd8f3117ca3a12fa6edbe
 
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.

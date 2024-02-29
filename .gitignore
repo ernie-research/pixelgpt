@@ -3,3 +3,5 @@ sst2-test/
 evaluate/
 test/
 wandb/
+**/__pycache__/
+*.pyc
