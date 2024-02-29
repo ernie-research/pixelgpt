@@ -2434,7 +2434,6 @@ class ErniePixelForSequenceClassification(ErniePixelPreTrainedModel):
         # pixel input ################################################
         pixel_values: Optional[torch.FloatTensor] = None,
         num_patches: Optional[torch.Tensor] = None,
-        pixel_attention_mask: Optional[torch.Tensor] = None,
         ##############################################################
     ) -> Union[Tuple, SequenceClassifierOutputWithPast]:
         r"""
@@ -2478,7 +2477,7 @@ class ErniePixelForSequenceClassification(ErniePixelPreTrainedModel):
                     logits.device
                 )
             else:
-                sequence_lengths = -1
+                sequence_lengths = attention_mask.sum(-1) - 1
 
         pooled_logits = logits[torch.arange(batch_size, device=logits.device), sequence_lengths]
 
