@@ -24,6 +24,7 @@ if is_torch_tpu_available():
 
 logger = logging.get_logger(__name__)
 
+from time import time
 
 class PIXELTrainer(Trainer):
     """
@@ -44,8 +45,11 @@ class PIXELTrainer(Trainer):
 
         # Uncomment this to visualize inputs
         # debug_log_inputs(inputs)
-
+        
+        import time
+        start_time = time.time()
         outputs = model(**inputs)
+        print(f"@@@ forward time cost={time.time() - start_time}")
 
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.

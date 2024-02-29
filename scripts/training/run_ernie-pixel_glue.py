@@ -964,6 +964,10 @@ class DataTrainingArguments:
     test_mismatched_file: Optional[str] = field(
         default=None, metadata={"help": "A csv or a json file containing the mismatched test data."}
     )
+    load_from_file: bool = field(
+        default=False, metadata={"help": "Load dataset from file or not."}
+    )
+
 
 
     def __post_init__(self):
@@ -1301,10 +1305,10 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    if data_args.task_name is not None:
+    if data_args.task_name is not None and not data_args.load_from_file:
         # Downloading and loading a dataset from the hub.
         raw_datasets = load_dataset("/root/paddlejob/workspace/env_run/liuqingyi01/data/eval_data/datasets--glue", data_args.task_name, cache_dir=model_args.cache_dir)
-    elif data_args.dataset_name is not None:
+    elif data_args.dataset_name is not None and not data_args.load_from_file:
         # Downloading and loading a dataset from the hub.
         raw_datasets = load_dataset(
             data_args.dataset_name, data_args.dataset_config_name, cache_dir=model_args.cache_dir
@@ -1312,7 +1316,8 @@ def main():
     else:
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
-        data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file, "validation_mismatched": data_args.validation_mismatched_file, "test_mismatched": data_args.test_mismatched_file}
+        data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
+        # data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file, "validation_mismatched": data_args.validation_mismatched_file, "test_mismatched": data_args.test_mismatched_file}
 
         # Get the test dataset: you can provide your own CSV/JSON test file (see below)
         # when you use `do_predict` without specifying a GLUE benchmark task.
@@ -1342,7 +1347,7 @@ def main():
 
 
     # Labels
-    if data_args.task_name is not None:
+    if data_args.task_name is not None and not data_args.load_from_file:
         is_regression = data_args.task_name == "stsb"
         if not is_regression:
             label_list = raw_datasets["train"].features["label"].names
@@ -1363,6 +1368,14 @@ def main():
 
     # Load pretrained model and config
     model, config = get_model_and_config(model_args, num_labels, data_args.task_name)
+
+    # ========== 打印模型参数量 ==============
+    def get_parameter_number(model):
+        total_num = sum(p.numel() for p in model.parameters())
+        trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        return {'Total': total_num, 'Trainable': trainable_num}
+    print(get_parameter_number(model))
+
 
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
