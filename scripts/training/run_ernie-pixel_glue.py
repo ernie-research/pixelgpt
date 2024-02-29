@@ -536,6 +536,14 @@ def main():
     # Load pretrained model and config
     model, config = get_model_and_config(model_args, num_labels, data_args.task_name)
 
+    # ========== 打印模型参数量 ==============
+    def get_parameter_number(model):
+        total_num = sum(p.numel() for p in model.parameters())
+        trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        return {'Total': total_num, 'Trainable': trainable_num}
+    print(get_parameter_number(model))
+
+
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[data_args.task_name]
