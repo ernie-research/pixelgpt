@@ -1346,7 +1346,7 @@ def main():
 
 
     # Labels
-    if data_args.task_name is not None:
+    if data_args.task_name is not None and not data_args.load_from_file:
         is_regression = data_args.task_name == "stsb"
         if not is_regression:
             label_list = raw_datasets["train"].features["label"].names
