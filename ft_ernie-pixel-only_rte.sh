@@ -13,55 +13,70 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # Settings
-export TASK="rte"
-export MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
-export RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-export SEQ_LEN=768
-export BSZ=4
-export GRAD_ACCUM=2  # We found that higher batch sizes can sometimes make training more stable
-export LR=3e-5
-export SEED=42
-export EPOCHS=5
+TASK="rte"
+MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
+RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
+SEQ_LEN=768
+BSZ=4
+GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
+LR=None
+SEED=42
+MAX_STEPS=None
 
-export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
+WARMUP_STEPS=10
+EVAL_STEPS=50
+SAVE_STEPS=50
+
 
 
 # === DEBUG ===
-# export RUN_NAME=test_preprocess-on-the-fly
+# RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-python scripts/training/run_ernie-pixel_glue.py \
-  --model_name_or_path=${MODEL} \
-  --model_type=ernie-pixel \
-  --processor_name=renderers/noto_renderer \
-  --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/rte-train/part-00000.gz \
-  --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/rte-validation/part-00000.gz \
-  --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/rte-test/part-00000.gz \
-  --rendering_backend=${RENDERING_BACKEND} \
-  --remove_unused_columns=False \
-  --do_train \
-  --do_eval \
-  --do_predict \
-  --max_seq_length=${SEQ_LEN} \
-  --num_train_epochs=${EPOCHS} \
-  --early_stopping \
-  --early_stopping_patience=5 \
-  --per_device_train_batch_size=${BSZ} \
-  --gradient_accumulation_steps=${GRAD_ACCUM} \
-  --learning_rate=${LR} \
-  --run_name=${RUN_NAME} \
-  --output_dir=${RUN_NAME} \
-  --overwrite_output_dir \
-  --overwrite_cache \
-  --logging_strategy=steps \
-  --logging_steps=1 \
-  --evaluation_strategy=steps \
-  --eval_steps=10 \
-  --save_strategy=steps \
-  --save_steps=10 \
-  --report_to=tensorboard \
-  --log_predictions \
-  --load_best_model_at_end=True \
-  --metric_for_best_model="eval_accuracy" \
-  --fp16 \
-  --seed=${SEED}
+for LR in 1e-5 3e-5 5e-5
+do
+    for GRAD_ACCUM in 1 2 8
+    do
+        for MAX_STEPS in 250 500 2000
+            do
+                RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${MAX_STEPS}-${SEED}"
+
+                python -m torch.distributed.launch --nproc_per_node=8 scripts/training/run_ernie-pixel_glue.py \
+                --model_name_or_path=${MODEL} \
+                --model_type=ernie-pixel \
+                --processor_name=renderers/noto_renderer \
+                --task_name=${TASK} \
+                --load_from_file=True \
+                --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-train/part-00000.gz \
+                --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-validation/part-00000.gz \
+                --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-test/part-00000.gz \
+                --rendering_backend=${RENDERING_BACKEND} \
+                --remove_unused_columns=False \
+                --max_steps=${MAX_STEPS} \
+                --do_train \
+                --do_eval \
+                --do_predict \
+                --max_seq_length=${SEQ_LEN} \
+                --early_stopping=False \
+                --warmup_steps=${WARMUP_STEPS} \
+                --per_device_train_batch_size=${BSZ} \
+                --gradient_accumulation_steps=${GRAD_ACCUM} \
+                --learning_rate=${LR} \
+                --run_name=${RUN_NAME} \
+                --output_dir=${RUN_NAME} \
+                --overwrite_output_dir \
+                --overwrite_cache \
+                --logging_strategy=steps \
+                --logging_steps=1 \
+                --evaluation_strategy=steps \
+                --eval_steps=${EVAL_STEPS} \
+                --save_strategy=steps \
+                --save_steps=${SAVE_STEPS} \
+                --save_total_limit=1 \
+                --report_to=tensorboard \
+                --log_predictions \
+                --load_best_model_at_end=True \
+                --seed=${SEED}
+            done
+    done
+done
