@@ -4,3 +4,4 @@ evaluate/
 test/
 wandb/
 **/__pycache__/
+*.pyc
