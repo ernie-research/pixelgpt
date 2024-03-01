@@ -1057,6 +1057,9 @@ class ModelArguments:
     model_type: str = field(
         default=None, metadata={"help": "Model type to use for the model. If not specified, it will be inferred from"}
     )
+    modality: str = field(
+        default=None, metadata={"help": "Modality to use for the model. If not specified, it will be inferred from"}
+    )
 
     def __post_init__(self):
         self.pooling_mode = PoolingMode.from_string(self.pooling_mode)
@@ -1425,7 +1428,16 @@ def main():
 
     # ======= 设置 modality ==============================================================
     # modality = Modality.TEXT if config.model_type in ["bert", "roberta"] else Modality.IMAGE
-    modality = Modality.TEXT if config.model_type in ["bert", "roberta", "llama"] else Modality.IMAGE #增加gpt2
+    if model_args.modality is None:
+        modality = Modality.TEXT if config.model_type in ["bert", "roberta", "llama"] else Modality.IMAGE #增加gpt2
+    else:
+        if model_args.modality == "text":
+            modality = Modality.TEXT
+        elif model_args.modality == "image":
+            modality = Modality.IMAGE
+        else:
+            raise ValueError(f"modality {model_args.modality} not supported")
+        
     processor = get_processor(model_args, modality)
 
     if modality == Modality.IMAGE:
