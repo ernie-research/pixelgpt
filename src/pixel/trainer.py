@@ -45,8 +45,8 @@ class PIXELTrainer(Trainer):
 
         # Uncomment this to visualize inputs
         # debug_log_inputs(inputs)
-        
         outputs = model(**inputs)
+        
 
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.
