@@ -64,7 +64,6 @@ do
                 --do_eval \
                 --do_predict \
                 --max_seq_length=${SEQ_LEN} \
-                --early_stopping=False \
                 --warmup_steps=${WARMUP_STEPS} \
                 --per_device_train_batch_size=${BSZ} \
                 --gradient_accumulation_steps=${GRAD_ACCUM} \
@@ -83,7 +82,7 @@ do
                 --report_to=tensorboard \
                 --log_predictions \
                 --load_best_model_at_end=True \
-                --early_stopping \
+                --early_stopping=True \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
