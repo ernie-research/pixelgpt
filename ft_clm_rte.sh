@@ -13,7 +13,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # Settings
-export TASK="sst2"
+export TASK="rte"
 export MODEL="pretrained_models/ernie-clm-base/checkpoint-61000" # also works with "bert-base-cased", "roberta-base", etc.
 export RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 export SEQ_LEN=1024
@@ -48,7 +48,7 @@ python scripts/training/run_ernie-pixel_glue.py \
   --per_device_train_batch_size=${BSZ} \
   --gradient_accumulation_steps=${GRAD_ACCUM} \
   --learning_rate=${LR} \
-  --warmup_steps=15 \
+  --warmup_steps=10 \
   --run_name=${RUN_NAME} \
   --output_dir=${RUN_NAME} \
   --overwrite_output_dir \
@@ -56,9 +56,9 @@ python scripts/training/run_ernie-pixel_glue.py \
   --logging_strategy=steps \
   --logging_steps=10 \
   --evaluation_strategy=steps \
-  --eval_steps=150 \
+  --eval_steps=100 \
   --save_strategy=steps \
-  --save_steps=150 \
+  --save_steps=100 \
   --report_to=tensorboard \
   --log_predictions \
   --load_best_model_at_end=True \

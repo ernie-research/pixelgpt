@@ -4,6 +4,8 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
+export CUDA_VISIBLE_DEVICES=4,5,6,7
+
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
 # A clear indicator of this is when the training loss is not decreasing substantially within the first 1k-3k steps
@@ -12,65 +14,17 @@ export PYTHONPATH=$PYTHONPATH:src/
 # We are still trying to find the optimal training recipe for PIXEL on these tasks,
 # the recipes used in the paper may not be the best ones out there
 
-# Settings
-<<<<<<< HEAD
-export TASK="sst2"
-export MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
-export RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-export SEQ_LEN=1024
-export BSZ=4
-export GRAD_ACCUM=8  # We found that higher batch sizes can sometimes make training more stable
-export LR=3e-5
-export SEED=42
-export EPOCHS=5
+# =====================Settings========================
+NUM_NODE=4
+MASTER_POART=4
 
-export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
+MODALITY="image"
 
-
-# === DEBUG ===
-# export RUN_NAME=test
-# =============
-
-python scripts/training/run_ernie-pixel_glue.py \
-  --model_name_or_path=${MODEL} \
-  --model_type=ernie-pixel \
-  --processor_name=renderers/noto_renderer \
-  --task_name=${TASK} \
-  --rendering_backend=${RENDERING_BACKEND} \
-  --remove_unused_columns=False \
-  --do_train \
-  --do_eval \
-  --do_predict \
-  --max_seq_length=${SEQ_LEN} \
-  --num_train_epochs=5 \
-  --early_stopping \
-  --early_stopping_patience=5 \
-  --per_device_train_batch_size=${BSZ} \
-  --gradient_accumulation_steps=${GRAD_ACCUM} \
-  --learning_rate=${LR} \
-  --warmup_steps=20 \
-  --run_name=${RUN_NAME} \
-  --output_dir=${RUN_NAME} \
-  --overwrite_output_dir \
-  --overwrite_cache \
-  --logging_strategy=steps \
-  --logging_steps=1 \
-  --evaluation_strategy=steps \
-  --eval_steps=250 \
-  --save_strategy=steps \
-  --save_steps=250 \
-  --report_to=tensorboard \
-  --log_predictions \
-  --fp16 \
-  --load_best_model_at_end=True \
-  --metric_for_best_model="eval_accuracy" \
-  --seed=${SEED}
-=======
 TASK="sst2"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
-BSZ=4
+BSZ=16
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
@@ -81,9 +35,11 @@ EVAL_STEPS=250
 SAVE_STEPS=250
 
 # early stopping
+IS_EARLY_STOPPING=True
 METRIC_FOR_BEST_MODEL="eval_accuracy"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
+
 
 
 
@@ -92,19 +48,19 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-# for LR in 1e-5 3e-5 5e-5
-for LR in 3e-5 5e-5
+for LR in 1e-5 3e-5 5e-5
 do
-    for GRAD_ACCUM in 1 2 8
+    for GRAD_ACCUM in 1 4
     do
         for MAX_STEPS in 8000
             do
-                RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="ernie-pixel-mono-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
-                python -m torch.distributed.launch --nproc_per_node=8 scripts/training/run_ernie-pixel_glue.py \
+                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
                 --processor_name=renderers/noto_renderer \
+                --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
                 --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-train/part-00000.gz \
@@ -133,15 +89,14 @@ do
                 --save_strategy=steps \
                 --save_steps=${SAVE_STEPS} \
                 --save_total_limit=1 \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --report_to=tensorboard \
                 --log_predictions \
-                --load_best_model_at_end=True \
-                --early_stopping \
+                --early_stopping=${IS_EARLY_STOPPING} \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
-                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
+                --load_best_model_at_end=True \
                 --seed=${SEED}
             done
     done
 done
->>>>>>> b3d43da9cd989c8a5ab3c029a1d9d5c008ac1d00

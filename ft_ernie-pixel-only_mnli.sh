@@ -13,29 +13,32 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # Settings
-export TASK="sst2"
-export MODEL="pretrained_models/ernie-clm-base/checkpoint-61000" # also works with "bert-base-cased", "roberta-base", etc.
+export TASK="mnli"
+export MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
 export RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-export SEQ_LEN=1024
-export BSZ=4
+export SEQ_LEN=768
+export BSZ=8
 export GRAD_ACCUM=8  # We found that higher batch sizes can sometimes make training more stable
 export LR=3e-5
 export SEED=42
-export EPOCHS=3
+export EPOCHS=10
 
-export RUN_NAME="ernie-clm-base-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
+export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
+
 
 # === DEBUG ===
 # export RUN_NAME=test
 # =============
 
-# python scripts/training/run_ernie-pixel_glue.py \
-#   --max_train_samples=32 \
-#   --max_eval_samples=32 \
-#   --max_predict_samples=32 \
 python scripts/training/run_ernie-pixel_glue.py \
   --model_name_or_path=${MODEL} \
-  --task_name=${TASK} \
+  --model_type=ernie-pixel \
+  --processor_name=renderers/noto_renderer \
+  --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-train/part-00000.gz \
+  --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-validation_matched/part-00000.gz \
+  --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-test_matched/part-00000.gz \
+  --validation_mismatched_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-validation_mismatched/part-00000.gz \
+  --test_mismatched_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-test_mismatched/part-00000.gz \
   --rendering_backend=${RENDERING_BACKEND} \
   --remove_unused_columns=False \
   --do_train \
@@ -48,18 +51,19 @@ python scripts/training/run_ernie-pixel_glue.py \
   --per_device_train_batch_size=${BSZ} \
   --gradient_accumulation_steps=${GRAD_ACCUM} \
   --learning_rate=${LR} \
-  --warmup_steps=15 \
+  --warmup_steps=50 \
   --run_name=${RUN_NAME} \
   --output_dir=${RUN_NAME} \
   --overwrite_output_dir \
   --overwrite_cache \
   --logging_strategy=steps \
-  --logging_steps=10 \
+  --logging_steps=1 \
   --evaluation_strategy=steps \
-  --eval_steps=150 \
+  --eval_steps=300 \
   --save_strategy=steps \
-  --save_steps=150 \
+  --save_steps=300 \
   --report_to=tensorboard \
+  --save_total_limit=1 \
   --log_predictions \
   --load_best_model_at_end=True \
   --metric_for_best_model="eval_accuracy" \
