@@ -16,11 +16,11 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # =====================Settings========================
 NUM_NODE=4
-MASTER_POART=4
+MASTER_POART=23456
 
 MODALITY="image"
 
-TASK="rte"
+TASK="mrpc"
 MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -36,12 +36,9 @@ SAVE_STEPS=50
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_accuracy"
+METRIC_FOR_BEST_MODEL="eval_f1"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
-
-
-
 
 
 # === DEBUG ===

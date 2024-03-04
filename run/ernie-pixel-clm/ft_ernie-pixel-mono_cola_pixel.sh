@@ -16,11 +16,11 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # =====================Settings========================
 NUM_NODE=4
-MASTER_POART=4
+MASTER_POART=23456
 
 MODALITY="image"
 
-TASK="rte"
+TASK="cola"
 MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -36,12 +36,9 @@ SAVE_STEPS=50
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_accuracy"
+METRIC_FOR_BEST_MODEL="eval_matthews_correlation"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
-
-
-
 
 
 # === DEBUG ===
@@ -54,7 +51,7 @@ do
     do
         for MAX_STEPS in 250 500 2000
             do
-                RUN_NAME="ernie-pixel-mono-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="ernie-pixel-clm-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
@@ -89,9 +86,9 @@ do
                 --save_strategy=steps \
                 --save_steps=${SAVE_STEPS} \
                 --save_total_limit=1 \
-                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --report_to=tensorboard \
                 --log_predictions \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --early_stopping=${IS_EARLY_STOPPING} \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
