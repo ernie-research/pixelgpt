@@ -642,10 +642,10 @@ def main():
     # Get the metric function
     if data_args.task_name is not None:
         # metric = load_metric("glue", data_args.task_name)
-        metric = load("/root/paddlejob/workspace/liuqingyi01/code/pixel/evaluate/metrics/glue/glue.py", data_args.task_name)
+        metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/glue/glue.py", data_args.task_name)
     else:
         # metric = load_metric("accuracy")
-        metric = load("/root/paddlejob/workspace/liuqingyi01/code/pixel/evaluate/metrics/accuracy.py")
+        metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/accuracy.py")
 
     # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
