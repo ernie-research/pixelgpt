@@ -45,11 +45,11 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+for LR in 5e-6 1e-5 5e-5 1e-4
 do
     for GRAD_ACCUM in 1 2 8
     do
-        for MAX_STEPS in 250 500 2000
+        for MAX_STEPS in 2000
             do
                 RUN_NAME="ernie-pixel-clm-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
