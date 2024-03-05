@@ -958,10 +958,10 @@ class DataTrainingArguments:
         default=None, metadata={"help": "A csv or a json file containing the validation data."}
     )
     test_file: Optional[str] = field(default=None, metadata={"help": "A csv or a json file containing the test data."})
-    validation_mismatched_file: Optional[str] = field(
+    validation_matched_file: Optional[str] = field(
         default=None, metadata={"help": "A csv or a json file containing the mismatched validation data."}
     )
-    test_mismatched_file: Optional[str] = field(
+    test_matched_file: Optional[str] = field(
         default=None, metadata={"help": "A csv or a json file containing the mismatched test data."}
     )
     load_from_file: bool = field(
@@ -1319,8 +1319,8 @@ def main():
     else:
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
-        data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
-        # data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file, "validation_mismatched": data_args.validation_mismatched_file, "test_mismatched": data_args.test_mismatched_file}
+        # data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
+        data_files = {"train": data_args.train_file, "validation_mismatched": data_args.validation_file, "test_mismatched": data_args.test_file, "validation_matched": data_args.validation_matched_file, "test_matched": data_args.test_matched_file}
 
         # Get the test dataset: you can provide your own CSV/JSON test file (see below)
         # when you use `do_predict` without specifying a GLUE benchmark task.
