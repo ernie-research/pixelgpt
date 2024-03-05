@@ -13,60 +13,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # Settings
-<<<<<<< HEAD
-export TASK="sst2"
-export MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
-export RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-export SEQ_LEN=1024
-export BSZ=4
-export GRAD_ACCUM=8  # We found that higher batch sizes can sometimes make training more stable
-export LR=3e-5
-export SEED=42
-export EPOCHS=5
-
-export RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${EPOCHS}-${SEED}"
-
-
-# === DEBUG ===
-# export RUN_NAME=test
-# =============
-
-python scripts/training/run_ernie-pixel_glue.py \
-  --model_name_or_path=${MODEL} \
-  --model_type=ernie-pixel \
-  --processor_name=renderers/noto_renderer \
-  --task_name=${TASK} \
-  --rendering_backend=${RENDERING_BACKEND} \
-  --remove_unused_columns=False \
-  --do_train \
-  --do_eval \
-  --do_predict \
-  --max_seq_length=${SEQ_LEN} \
-  --num_train_epochs=5 \
-  --early_stopping \
-  --early_stopping_patience=5 \
-  --per_device_train_batch_size=${BSZ} \
-  --gradient_accumulation_steps=${GRAD_ACCUM} \
-  --learning_rate=${LR} \
-  --warmup_steps=20 \
-  --run_name=${RUN_NAME} \
-  --output_dir=${RUN_NAME} \
-  --overwrite_output_dir \
-  --overwrite_cache \
-  --logging_strategy=steps \
-  --logging_steps=1 \
-  --evaluation_strategy=steps \
-  --eval_steps=250 \
-  --save_strategy=steps \
-  --save_steps=250 \
-  --report_to=tensorboard \
-  --log_predictions \
-  --fp16 \
-  --load_best_model_at_end=True \
-  --metric_for_best_model="eval_accuracy" \
-  --seed=${SEED}
-=======
-TASK="sst2"
+TASK="mrpc"
 MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -76,15 +23,9 @@ LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=100
-EVAL_STEPS=250
-SAVE_STEPS=250
-
-# early stopping
-METRIC_FOR_BEST_MODEL="eval_accuracy"
-EARLY_STOPPING_PATIENCE=8
-GREATER_IS_BETTER=True
-
+WARMUP_STEPS=10
+EVAL_STEPS=50
+SAVE_STEPS=50
 
 
 
@@ -92,12 +33,11 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-# for LR in 1e-5 3e-5 5e-5
-for LR in 3e-5 5e-5
+for LR in 1e-5 3e-5 5e-5
 do
     for GRAD_ACCUM in 1 2 8
     do
-        for MAX_STEPS in 8000
+        for MAX_STEPS in 250 500 2000
             do
                 RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${MAX_STEPS}-${SEED}"
 
@@ -117,6 +57,7 @@ do
                 --do_eval \
                 --do_predict \
                 --max_seq_length=${SEQ_LEN} \
+                --early_stopping=False \
                 --warmup_steps=${WARMUP_STEPS} \
                 --per_device_train_batch_size=${BSZ} \
                 --gradient_accumulation_steps=${GRAD_ACCUM} \
@@ -135,12 +76,8 @@ do
                 --report_to=tensorboard \
                 --log_predictions \
                 --load_best_model_at_end=True \
-                --early_stopping=True \
-                --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
-                --greater_is_better=${GREATER_IS_BETTER} \
-                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
+                --bf16 \
                 --seed=${SEED}
             done
     done
 done
->>>>>>> b3d43da9cd989c8a5ab3c029a1d9d5c008ac1d00
