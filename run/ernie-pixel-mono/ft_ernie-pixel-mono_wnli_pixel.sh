@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-# export CUDA_VISIBLE_DEVICES=4,5,6,7
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -15,24 +15,24 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=8
+NUM_NODE=4
 MASTER_POART=23456
 
-MODALITY="text"
+MODALITY="image"
 
-TASK="qnli"
-MODEL="pretrained_models/ernie-pixel-clm/checkpoint-9625/" # also works with "bert-base-cased", "roberta-base", etc.
+TASK="wnli"
+MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
-BSZ=8
+BSZ=4
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=100
-EVAL_STEPS=250
-SAVE_STEPS=250
+WARMUP_STEPS=10
+EVAL_STEPS=5
+SAVE_STEPS=5
 
 # early stopping
 IS_EARLY_STOPPING=True
@@ -50,15 +50,16 @@ GREATER_IS_BETTER=True
 
 for LR in 1e-5 3e-5 5e-5
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 1 2 4 8
     do
-        for MAX_STEPS in 8000
+        for MAX_STEPS in 250
             do
-                RUN_NAME="ernie-pixel-clm-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
+                --processor_name=renderers/noto_renderer \
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
@@ -95,7 +96,6 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --bf16 \
                 --seed=${SEED}
             done
     done
