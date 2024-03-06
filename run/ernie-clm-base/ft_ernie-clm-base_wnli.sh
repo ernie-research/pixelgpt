@@ -21,7 +21,7 @@ MASTER_POART=23455
 MODALITY="text"
 
 TASK="wnli"
-MODEL="pretrained_models/ernie-clm-base/checkpoint-9625/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-clm-base/checkpoint-27500/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=4
