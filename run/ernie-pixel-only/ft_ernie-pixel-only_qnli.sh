@@ -86,6 +86,7 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
+                --bf16 \
                 --seed=${SEED}
             done
     done
