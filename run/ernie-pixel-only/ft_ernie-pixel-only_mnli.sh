@@ -14,7 +14,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # Settings
 TASK="mnli"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-only/checkpoint-27500/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=4
@@ -33,9 +33,9 @@ SAVE_STEPS=500
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+for LR in 5e-5
 do
-    for GRAD_ACCUM in 2 8
+    for GRAD_ACCUM in 2
     do
         for MAX_STEPS in 15000
             do

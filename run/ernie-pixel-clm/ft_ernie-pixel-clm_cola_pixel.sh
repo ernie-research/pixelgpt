@@ -46,7 +46,7 @@ GREATER_IS_BETTER=True
 # =============
 
 # for LR in 5e-6 1e-5 3e-5 5e-5 1e-4
-for LR in 5e-6 1e-4
+for LR in 5e-6 1e-5 5e-5 1e-4
 do
     for GRAD_ACCUM in 1 2 4 8
     do
