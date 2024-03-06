@@ -21,7 +21,7 @@ MASTER_POART=23456
 MODALITY="image"
 
 TASK="qqp"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-only/checkpoint-27500/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
