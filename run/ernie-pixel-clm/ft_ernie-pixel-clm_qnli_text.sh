@@ -48,7 +48,8 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+# for LR in 1e-5 3e-5 5e-5
+for LR in 3e-5 5e-5
 do
     for GRAD_ACCUM in 1
     do
@@ -95,7 +96,6 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --bf16 \
                 --seed=${SEED}
             done
     done
