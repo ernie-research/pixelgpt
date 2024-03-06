@@ -523,8 +523,8 @@ def main():
     else:
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
-        data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
-        # data_files = {"train": data_args.train_file, "validation_mismatched": data_args.validation_file, "test_mismatched": data_args.test_file, "validation_matched": data_args.validation_matched_file, "test_matched": data_args.test_matched_file}
+        # data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
+        data_files = {"train": data_args.train_file, "validation_mismatched": data_args.validation_file, "test_mismatched": data_args.test_file, "validation_matched": data_args.validation_matched_file, "test_matched": data_args.test_matched_file}
 
         # Get the test dataset: you can provide your own CSV/JSON test file (see below)
         # when you use `do_predict` without specifying a GLUE benchmark task.
