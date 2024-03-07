@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -16,7 +16,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 # =====================Settings========================
 NUM_NODE=4
-MASTER_POART=23455
+MASTER_POART=23456
 
 MODALITY="text"
 
