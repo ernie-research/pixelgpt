@@ -70,7 +70,6 @@ do
                 --do_eval \
                 --do_predict \
                 --max_seq_length=${SEQ_LEN} \
-                --early_stopping=False \
                 --warmup_steps=${WARMUP_STEPS} \
                 --per_device_train_batch_size=${BSZ} \
                 --gradient_accumulation_steps=${GRAD_ACCUM} \

@@ -96,7 +96,7 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --fp16 \
+                --bf16 \
                 --seed=${SEED}
             done
     done
