@@ -17,7 +17,7 @@ NUM_NODE=8
 MASTER_POART=23456
 
 TASK="sst2"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-25000/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=4
@@ -31,6 +31,7 @@ EVAL_STEPS=250
 SAVE_STEPS=250
 
 # early stopping
+IS_EARLY_STOPPING=True
 METRIC_FOR_BEST_MODEL="eval_accuracy"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
@@ -84,10 +85,10 @@ do
                 --report_to=tensorboard \
                 --log_predictions \
                 --load_best_model_at_end=True \
-                --early_stopping=True \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
+                --early_stopping=${IS_EARLY_STOPPING} \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
-                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --seed=${SEED}
             done
     done

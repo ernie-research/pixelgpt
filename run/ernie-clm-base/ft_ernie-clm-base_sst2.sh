@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+# export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -15,16 +15,16 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=4
+NUM_NODE=8
 MASTER_POART=23456
 
 MODALITY="text"
 
 TASK="sst2"
-MODEL="pretrained_models/ernie-clm-base/checkpoint-25000/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-clm-base/checkpoint-2500/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
-BSZ=16
+BSZ=8
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42

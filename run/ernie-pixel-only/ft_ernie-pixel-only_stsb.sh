@@ -14,41 +14,38 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # Settings
 NUM_NODE=8
-MASTER_POART=23453
+MASTER_POART=23457
 
-TASK="qnli"
+TASK="stsb"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
-BSZ=8
+BSZ=4
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=100
-EVAL_STEPS=250
-SAVE_STEPS=250
+WARMUP_STEPS=10
+EVAL_STEPS=50
+SAVE_STEPS=50
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_accuracy"
+METRIC_FOR_BEST_MODEL="eval_spearmanr"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
-
-
 
 
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-# for LR in 1e-5 3e-5 5e-5
 for LR in 5e-5
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 8
     do
-        for MAX_STEPS in 8000
+        for MAX_STEPS in 500
             do
                 RUN_NAME="ernie-pixel-only/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
@@ -85,11 +82,11 @@ do
                 --save_total_limit=1 \
                 --report_to=tensorboard \
                 --log_predictions \
-                --load_best_model_at_end=True \
                 --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --early_stopping=${IS_EARLY_STOPPING} \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
+                --load_best_model_at_end=True \
                 --seed=${SEED}
             done
     done
