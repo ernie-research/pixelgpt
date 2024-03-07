@@ -16,11 +16,11 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # =====================Settings========================
 NUM_NODE=4
-MASTER_POART=23454
+MASTER_POART=23457
 MODALITY="text"
 
 TASK="stsb"
-MODEL="pretrained_models/ernie-clm-base/checkpoint-5000/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-clm-base/checkpoint-2500/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
