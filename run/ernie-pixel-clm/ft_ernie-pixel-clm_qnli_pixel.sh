@@ -21,7 +21,7 @@ MASTER_POART=23456
 MODALITY="image"
 
 TASK="qnli"
-MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-clm/checkpoint-9625/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
@@ -50,7 +50,7 @@ GREATER_IS_BETTER=True
 
 for LR in 1e-5 3e-5 5e-5
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 4 1
     do
         for MAX_STEPS in 8000
             do

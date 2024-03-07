@@ -13,8 +13,11 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # Settings
+NUM_NODE=8
+MASTER_POART=23452
+
 TASK="mrpc"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-51750" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-only/checkpoint-2500" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=4
@@ -33,13 +36,13 @@ SAVE_STEPS=50
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+for LR in 5e-5
 do
-    for GRAD_ACCUM in 1 2 8
+    for GRAD_ACCUM in 1
     do
-        for MAX_STEPS in 250 500 2000
+        for MAX_STEPS in 2000
             do
-                RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="ernie-pixel-only/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=8 scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
@@ -76,7 +79,6 @@ do
                 --report_to=tensorboard \
                 --log_predictions \
                 --load_best_model_at_end=True \
-                --bf16 \
                 --seed=${SEED}
             done
     done

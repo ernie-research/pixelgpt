@@ -14,12 +14,14 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 # We are still trying to find the optimal training recipe for PIXEL on these tasks,
 # the recipes used in the paper may not be the best ones out there
 
-# Settings
+# =====================Settings========================
 NUM_NODE=4
-MASTER_POART=23455
+MASTER_POART=23456
+
+MODALITY="text"
 
 TASK="rte"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-2500/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-clm-base/checkpoint-25000/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
@@ -32,24 +34,31 @@ WARMUP_STEPS=10
 EVAL_STEPS=50
 SAVE_STEPS=50
 
+# early stopping
+IS_EARLY_STOPPING=True
+METRIC_FOR_BEST_MODEL="eval_accuracy"
+EARLY_STOPPING_PATIENCE=8
+GREATER_IS_BETTER=True
+
+
+
 
 
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 3e-5
+for LR in 1e-5
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 2
     do
         for MAX_STEPS in 2000
             do
-                RUN_NAME="ernie-pixel-only/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="ernie-clm-base/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
-                --model_type=ernie-pixel \
-                --processor_name=renderers/noto_renderer \
+                --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
                 --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-train/part-00000.gz \
@@ -78,8 +87,12 @@ do
                 --save_strategy=steps \
                 --save_steps=${SAVE_STEPS} \
                 --save_total_limit=1 \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --report_to=tensorboard \
                 --log_predictions \
+                --early_stopping=${IS_EARLY_STOPPING} \
+                --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
+                --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
                 --seed=${SEED}
             done
