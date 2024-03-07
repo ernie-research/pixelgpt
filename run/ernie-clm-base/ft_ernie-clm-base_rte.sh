@@ -16,7 +16,7 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # =====================Settings========================
 NUM_NODE=4
-MASTER_POART=23456
+MASTER_POART=23455
 
 MODALITY="text"
 
