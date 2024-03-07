@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-CKPT_NAME=ckpt-25000
+CKPT_NAME=ckpt-5000
 LOG_DIR=log/ft_ernie-pixel-only/$CKPT_NAME
 
 mkdir -p $LOG_DIR
