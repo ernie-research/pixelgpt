@@ -17,7 +17,7 @@ NUM_NODE=8
 MASTER_POART=23451
 
 TASK="mnli"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-25000/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-only/checkpoint-12500/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
@@ -80,7 +80,7 @@ do
                 --save_total_limit=1 \
                 --report_to=tensorboard \
                 --log_predictions \
-                --fp16 \
+                --bf16 \
                 --load_best_model_at_end=True \
                 --seed=${SEED}
             done
