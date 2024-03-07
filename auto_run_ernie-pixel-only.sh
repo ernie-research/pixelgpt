@@ -4,12 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-<<<<<<< HEAD
-step=12500
-=======
 step=5000
-
->>>>>>> a81c58d4042f537c0d16a8d0ec9e297677891eff
 MODEL=pretrained_models/ernie-pixel-only/checkpoint-${step}/
 CKPT_NAME=ckpt-${step}
 LOG_DIR=log/ft_ernie-pixel-only/$CKPT_NAME
@@ -17,9 +12,6 @@ LOG_DIR=log/ft_ernie-pixel-only/$CKPT_NAME
 mkdir -p $LOG_DIR
 
 # for TASK in mnli qqp qnli sst2 cola mrpc stsb rte wnli
-<<<<<<< HEAD
-for TASK in stsb rte wnli
-=======
 for TASK in mnli
 >>>>>>> a81c58d4042f537c0d16a8d0ec9e297677891eff
 do
