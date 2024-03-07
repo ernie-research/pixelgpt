@@ -21,7 +21,7 @@ MASTER_POART=23455
 MODALITY="text"
 
 TASK="rte"
-MODEL="pretrained_models/ernie-pixel-clm/checkpoint-9625/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
