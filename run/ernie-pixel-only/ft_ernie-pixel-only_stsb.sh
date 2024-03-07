@@ -30,6 +30,11 @@ WARMUP_STEPS=10
 EVAL_STEPS=50
 SAVE_STEPS=50
 
+# early stopping
+IS_EARLY_STOPPING=True
+METRIC_FOR_BEST_MODEL="eval_spearmanr"
+EARLY_STOPPING_PATIENCE=8
+GREATER_IS_BETTER=True
 
 
 # === DEBUG ===
@@ -60,7 +65,6 @@ do
                 --do_eval \
                 --do_predict \
                 --max_seq_length=${SEQ_LEN} \
-                --early_stopping=False \
                 --warmup_steps=${WARMUP_STEPS} \
                 --per_device_train_batch_size=${BSZ} \
                 --gradient_accumulation_steps=${GRAD_ACCUM} \
@@ -78,6 +82,10 @@ do
                 --save_total_limit=1 \
                 --report_to=tensorboard \
                 --log_predictions \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
+                --early_stopping=${IS_EARLY_STOPPING} \
+                --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
+                --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
                 --seed=${SEED}
             done

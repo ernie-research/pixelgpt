@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=4,5,6,7
+# export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -15,13 +15,13 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=4
-MASTER_POART=23456
+NUM_NODE=8
+MASTER_POART=23452
 
 MODALITY="image"
 
 TASK="mrpc"
-MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
@@ -45,11 +45,11 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+for LR in 3e-05
 do
-    for GRAD_ACCUM in 1 2 8
+    for GRAD_ACCUM in 4
     do
-        for MAX_STEPS in 250 500 2000
+        for MAX_STEPS in 500
             do
                 RUN_NAME="ernie-pixel-mono-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
