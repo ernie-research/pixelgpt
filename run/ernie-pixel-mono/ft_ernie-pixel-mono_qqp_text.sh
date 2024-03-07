@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+# export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -15,12 +15,12 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=4
+NUM_NODE=8
 MASTER_POART=23456
 
 MODALITY="text"
 
-TASK="rte"
+TASK="qqp"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -30,18 +30,15 @@ LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=10
-EVAL_STEPS=50
-SAVE_STEPS=50
+WARMUP_STEPS=100
+EVAL_STEPS=500
+SAVE_STEPS=500
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_accuracy"
+METRIC_FOR_BEST_MODEL="eval_f1"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
-
-
-
 
 
 # === DEBUG ===
@@ -50,9 +47,9 @@ GREATER_IS_BETTER=True
 
 for LR in 5e-5
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 4
     do
-        for MAX_STEPS in 2000
+        for MAX_STEPS in 15000
             do
                 RUN_NAME="ernie-pixel-mono/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
