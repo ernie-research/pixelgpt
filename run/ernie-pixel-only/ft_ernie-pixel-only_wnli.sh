@@ -21,7 +21,7 @@ MASTER_POART=23457
 MODALITY="image"
 
 TASK="wnli"
-MODEL="pretrained_models/ernie-pixel-only/checkpoint-25000/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL="pretrained_models/ernie-pixel-only/checkpoint-5000/" # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=4
