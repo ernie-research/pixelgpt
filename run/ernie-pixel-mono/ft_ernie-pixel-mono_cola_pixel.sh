@@ -16,12 +16,12 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # =====================Settings========================
 NUM_NODE=8
-MASTER_POART=23456
+MASTER_POART=23450
 
 MODALITY="image"
 
 TASK="cola"
-MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=4
@@ -45,9 +45,9 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 5e-6 1e-7
+for LR in 1e-05
 do
-    for GRAD_ACCUM in 1 2 4 8
+    for GRAD_ACCUM in 2
     do
         for MAX_STEPS in 2000
             do
