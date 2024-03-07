@@ -16,7 +16,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # =====================Settings========================
 NUM_NODE=8
-MASTER_POART=23456
+MASTER_POART=23453
 
 MODALITY="text"
 
