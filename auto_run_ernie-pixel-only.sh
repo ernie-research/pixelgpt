@@ -4,9 +4,10 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-CKPT_NAME=ckpt-25000
-LOG_DIR=log/ft_ernie-pixel-only/$CKPT_NAME
+# ==== 设置ckpt ====
+CKPT_NAME=ckpt-12500
 
+LOG_DIR=log/ft_ernie-pixel-only/$CKPT_NAME
 mkdir -p $LOG_DIR
 
 for TASK in mnli qqp qnli sst2 cola mrpc stsb rte wnli
