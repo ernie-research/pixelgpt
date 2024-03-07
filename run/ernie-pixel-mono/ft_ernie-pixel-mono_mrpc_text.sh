@@ -16,12 +16,12 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 # =====================Settings========================
 NUM_NODE=4
-MASTER_POART=23455
+MASTER_POART=23452
 
 MODALITY="text"
 
 TASK="mrpc"
-MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
+MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
@@ -45,13 +45,13 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+for LR in 5e-5
 do
-    for GRAD_ACCUM in 1 2 8
+    for GRAD_ACCUM in 2
     do
-        for MAX_STEPS in 250 500 2000
+        for MAX_STEPS in 500
             do
-                RUN_NAME="ernie-pixel-mono-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="ernie-pixel-mono/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
