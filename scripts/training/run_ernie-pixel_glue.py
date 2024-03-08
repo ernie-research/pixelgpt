@@ -1111,6 +1111,7 @@ def get_model_and_config(model_args: argparse.Namespace, num_labels: int, task_n
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
             num_labels=num_labels, # ???
             finetuning_task=task_name, # ???
+            attention_dropout=model_args.dropout_prob,
             **config_kwargs,
         )
     elif model_args.model_type == "ernie-pixel":
@@ -1118,6 +1119,7 @@ def get_model_and_config(model_args: argparse.Namespace, num_labels: int, task_n
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
             num_labels=num_labels, # ???
             finetuning_task=task_name, # ???
+            attention_dropout=model_args.dropout_prob,
             **config_kwargs,
         )
     else:
