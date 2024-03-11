@@ -4,7 +4,6 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-# export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -16,11 +15,11 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # =====================Settings========================
 NUM_NODE=8
-MASTER_POART=23454
+MASTER_POART=23450
 
 MODALITY="image"
 
-TASK="qqp"
+TASK="cola"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -31,29 +30,35 @@ SEED=42
 MAX_STEPS=None
 
 WARMUP_STEPS=100
-EVAL_STEPS=500
-SAVE_STEPS=500
+EVAL_STEPS=10
+SAVE_STEPS=10
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_f1"
-EARLY_STOPPING_PATIENCE=8
+METRIC_FOR_BEST_MODEL="eval_matthews_correlation"
+EARLY_STOPPING_PATIENCE=20
 GREATER_IS_BETTER=True
+
+LR_SCHEDULER="cosine"
+DROPOUT_PROB=0.1
 
 
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 5e-5
+# for LR in 5e-6 1e-5 3e-5 5e-5 1e-4
+for LR in 3e-6 5e-6 7e-6 1e-5 3e-5 5e-5 7e-5 1e-4
 do
-    for GRAD_ACCUM in 4
+    for GRAD_ACCUM in 16
     do
-        for MAX_STEPS in 15000
+        for MAX_STEPS in 2000
             do
-                RUN_NAME="ernie-pixel-clm/$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="experiment/ft-pixel-cola/ernie-pixel-clm/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${LR_SCHEDULER}-${DROPOUT_PROB}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
+                --lr_scheduler_type=${LR_SCHEDULER} \
+                --dropout_prob=$DROPOUT_PROB \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
                 --processor_name=renderers/noto_renderer \
@@ -86,27 +91,14 @@ do
                 --save_strategy=steps \
                 --save_steps=${SAVE_STEPS} \
                 --save_total_limit=1 \
-                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --report_to=tensorboard \
                 --log_predictions \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --early_stopping=${IS_EARLY_STOPPING} \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --bf16 \
                 --seed=${SEED}
             done
     done
 done
-
-# 杀死占用端口
-ORT=$MASTER_POART} # 替换成你的端口号
-# 获取指定端口的所有进程ID
-PIDS=$(lsof -ti:$PORT)
-# 判断是否有进程在使用指定端口
-if [ -n "$PIDS" ]; then
-    # 逐个终止进程
-    for PID in $PIDS; do
-        kill -9 $PID
-    done
-fi
