@@ -23,7 +23,7 @@ TASK="cola"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
-BSZ=8
+BSZ=4
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
@@ -50,7 +50,7 @@ DROPOUT_PROB=0.1
 # for LR in 5e-6 1e-5 3e-5 5e-5 1e-4
 for LR in 3e-6 5e-6 7e-6 1e-5 3e-5 5e-5 7e-5 1e-4
 do
-    for GRAD_ACCUM in 8 16
+    for GRAD_ACCUM in 16
     do
         for MAX_STEPS in 2000
             do
@@ -98,6 +98,7 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
+                --fp16 \
                 --seed=${SEED}
             done
     done
