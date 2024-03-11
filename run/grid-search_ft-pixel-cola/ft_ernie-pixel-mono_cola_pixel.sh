@@ -48,9 +48,9 @@ DROPOUT_PROB=0.1
 # =============
 
 # for LR in 5e-6 1e-5 3e-5 5e-5 1e-4
-for LR in 3e-6 5e-6 7e-6 1e-5 3e-5 5e-5 7e-5 1e-4
+for LR in 1e-5 3e-5 5e-5 1e-4
 do
-    for GRAD_ACCUM in 16
+    for GRAD_ACCUM in 16 32 
     do
         for MAX_STEPS in 2000
             do
