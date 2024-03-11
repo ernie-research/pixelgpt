@@ -45,10 +45,6 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-<<<<<<< HEAD
-# for LR in 1e-5 3e-5 5e-5
-=======
->>>>>>> 7135e2b1c15a471114c5ab7aee4ac72e95816d92
 for LR in 5e-5
 do
     for GRAD_ACCUM in 4
