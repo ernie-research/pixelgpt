@@ -81,6 +81,7 @@ do
                 --save_strategy=steps \
                 --save_steps=${SAVE_STEPS} \
                 --save_total_limit=1 \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --report_to=tensorboard \
                 --log_predictions \
                 --bf16 \
@@ -89,6 +90,7 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
+                --bf16 \
                 --seed=${SEED}
             done
     done
