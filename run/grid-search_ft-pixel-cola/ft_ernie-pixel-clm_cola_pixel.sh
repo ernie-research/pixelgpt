@@ -4,7 +4,6 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -15,12 +14,12 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=4
-MASTER_POART=23452
+NUM_NODE=8
+MASTER_POART=23450
 
-MODALITY="text"
+MODALITY="image"
 
-TASK="mrpc"
+TASK="cola"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -30,32 +29,39 @@ LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=10
-EVAL_STEPS=50
-SAVE_STEPS=50
+WARMUP_STEPS=100
+EVAL_STEPS=10
+SAVE_STEPS=10
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_f1"
-EARLY_STOPPING_PATIENCE=8
+METRIC_FOR_BEST_MODEL="eval_matthews_correlation"
+EARLY_STOPPING_PATIENCE=20
 GREATER_IS_BETTER=True
+
+LR_SCHEDULER="cosine"
+DROPOUT_PROB=0.1
 
 
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 3e-5
+# for LR in 5e-6 1e-5 3e-5 5e-5 1e-4
+for LR in 3e-6 5e-6 7e-6 1e-5 3e-5 5e-5 7e-5 1e-4
 do
-    for GRAD_ACCUM in 2
+    for GRAD_ACCUM in 8 16
     do
         for MAX_STEPS in 2000
             do
-                RUN_NAME="ernie-pixel-clm/$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="experiment/ft-pixel-cola/ernie-pixel-clm/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${LR_SCHEDULER}-${DROPOUT_PROB}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
+                --lr_scheduler_type=${LR_SCHEDULER} \
+                --dropout_prob=$DROPOUT_PROB \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
+                --processor_name=renderers/noto_renderer \
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
@@ -85,9 +91,9 @@ do
                 --save_strategy=steps \
                 --save_steps=${SAVE_STEPS} \
                 --save_total_limit=1 \
-                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --report_to=tensorboard \
                 --log_predictions \
+                --metric_for_best_model=${METRIC_FOR_BEST_MODEL} \
                 --early_stopping=${IS_EARLY_STOPPING} \
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
