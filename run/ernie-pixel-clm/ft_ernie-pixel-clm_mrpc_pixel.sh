@@ -99,7 +99,7 @@ do
 done
 
 # 杀死占用端口
-ORT=$MASTER_POART} # 替换成你的端口号
+PORT=$MASTER_POART} # 替换成你的端口号
 # 获取指定端口的所有进程ID
 PIDS=$(lsof -ti:$PORT)
 # 判断是否有进程在使用指定端口
