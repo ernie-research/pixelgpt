@@ -4,7 +4,7 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+# export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
@@ -15,7 +15,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=4
+NUM_NODE=8
 MASTER_POART=23450
 
 MODALITY="text"
@@ -45,7 +45,7 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5 3e-5 5e-5
+for LR in 3e-5
 do
     for GRAD_ACCUM in 8
     do
