@@ -42,12 +42,6 @@ GREATER_IS_BETTER=True
 
 
 
-
-
-# === DEBUG ===
-# RUN_NAME=test_preprocess-on-the-fly
-# =============
-
 for LR in 5e-5
 do
     for GRAD_ACCUM in 4
@@ -100,15 +94,3 @@ do
             done
     done
 done
-
-# 杀死占用端口
-PORT=$MASTER_POART # 替换成你的端口号
-# 获取指定端口的所有进程ID
-PIDS=$(lsof -ti:$PORT)
-# 判断是否有进程在使用指定端口
-if [ -n "$PIDS" ]; then
-    # 逐个终止进程
-    for PID in $PIDS; do
-        kill -9 $PID
-    done
-fi
