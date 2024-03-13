@@ -21,11 +21,7 @@ MASTER_POART=23454
 MODALITY="text"
 
 TASK="qqp"
-<<<<<<< HEAD
-MODEL="pretrained_models/ernie-pixel-mono/checkpoint-13750/" # also works with "bert-base-cased", "roberta-base", etc.
-=======
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
->>>>>>> 9697392f35756d109407308edbc9dbc31a5193d1
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
 BSZ=8
@@ -48,25 +44,13 @@ GREATER_IS_BETTER=True
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
-
-<<<<<<< HEAD
-for LR in 1e-5 3e-5 5e-5
-do
-    for GRAD_ACCUM in 4 1
-    do
-        for MAX_STEPS in 15000
-            do
-                RUN_NAME="ernie-pixel-only-${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
-=======
 for LR in 5e-5
 do
     for GRAD_ACCUM in 4
     do
         for MAX_STEPS in 15000
             do
-                RUN_NAME="ernie-pixel-mono/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
->>>>>>> 9697392f35756d109407308edbc9dbc31a5193d1
-
+                RUN_NAME="ernie-pixel-mono/$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
