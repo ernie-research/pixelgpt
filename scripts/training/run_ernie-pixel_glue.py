@@ -256,13 +256,16 @@ class ModelArguments:
         },
     )
     dropout_prob: float = field(
-        default=0.1, metadata={"help": "Dropout probability for attention blocks and classification head"}
+        default=None, metadata={"help": "Dropout probability for attention blocks and classification head"}
     )
     model_type: str = field(
         default=None, metadata={"help": "Model type to use for the model. If not specified, it will be inferred from"}
     )
     modality: str = field(
         default=None, metadata={"help": "Modality to use for the model. If not specified, it will be inferred from"}
+    )
+    patch_size: int = field(
+        default=None, metadata={"help": "Patch size to use for the model. If not specified, it will be set from model config"}
     )
 
     def __post_init__(self):
@@ -334,6 +337,10 @@ def get_model_and_config(model_args: argparse.Namespace, num_labels: int, task_n
             **config_kwargs,
         )
     elif config.model_type in ["ernie-pixel"]:
+        if model_args.dropout_prob is not None:
+            config.attention_dropout = model_args.dropout_prob
+        if model_args.patch_size is not None:
+            config.patch_size = model_args.patch_size
         model = ErniePixelForSequenceClassification.from_pretrained(
             model_args.model_name_or_path,
             config=config,
