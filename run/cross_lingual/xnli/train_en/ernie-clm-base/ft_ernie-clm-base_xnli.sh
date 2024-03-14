@@ -92,3 +92,6 @@ do
             done
     done
 done
+
+# 格式化结果
+python src/utils/format_result_xnli.py $RUN_NAME
