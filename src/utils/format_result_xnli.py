@@ -12,10 +12,18 @@ def main(output_dir: str):
     res_df = pd.read_json(os.path.join(output_dir, 'all_results.json'), typ='series')
 
     res_dict = OrderedDict()
+    
+    avg = 0.
 
     for lan in XNLI_LANGUAGES:
         key = 'test' + '_' + lan + '_' + 'accuracy'
-        res_dict[key] = res_df[key]
+        val = res_df[key]
+        res_dict[key] = round(val * 100., 1)
+        avg += val
+    
+    res_dict['Avg'] = round((avg / len(XNLI_LANGUAGES))*100., 1)
+
+    
 
     new_res_df = pd.DataFrame([res_dict])
     new_res_df.to_csv(os.path.join(output_dir, 'all_result.csv'), index=False)
