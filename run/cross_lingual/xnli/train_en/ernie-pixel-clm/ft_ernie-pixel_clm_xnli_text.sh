@@ -28,9 +28,9 @@ LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=10
-EVAL_STEPS=50
-SAVE_STEPS=50
+WARMUP_STEPS=100
+EVAL_STEPS=500
+SAVE_STEPS=500
 
 # early stopping
 IS_EARLY_STOPPING=False
@@ -50,9 +50,9 @@ do
     do
         for MAX_STEPS in 15000
             do  
-                RUN_NAME="experiment/cross_lingual/xnli/ernie-pixel-only/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="experiment/cross_lingual/xnli/ernie-pixel-clm/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
-                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training//run_ernie_xnli_translate_train_all.py \
+                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie_xnli_translate_train_en.py \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
                 --modality=${MODALITY} \
