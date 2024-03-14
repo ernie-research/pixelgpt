@@ -50,7 +50,7 @@ do
     do
         for MAX_STEPS in 15000
             do  
-                RUN_NAME="experiment/cross_lingual/xnli/ernie-pixel-mono/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="experiment/cross_lingual/xnli/train_en/ernie-pixel-mono/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
                 python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie_xnli_translate_train_en.py \
                 --model_name_or_path=${MODEL} \
