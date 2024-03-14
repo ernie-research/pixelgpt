@@ -44,9 +44,9 @@ GREATER_IS_BETTER=True
 # =============
 
 
-for LR in 5e-5
+for LR in 1e-5 3e-5 5e-5 1e-4
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 4 8
     do
         for MAX_STEPS in 15000
             do  
