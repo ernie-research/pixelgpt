@@ -13,7 +13,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=8
+NUM_NODE=1
 MASTER_POART=23450
 
 MODALITY="image"
@@ -21,7 +21,7 @@ MODALITY="image"
 TASK="xnli"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-SEQ_LEN=768
+SEQ_LEN=256
 BSZ=8
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
@@ -59,7 +59,7 @@ do
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
-                --data_file_dir=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data \
+                --data_file_dir=data/ \
                 --rendering_backend=${RENDERING_BACKEND} \
                 --remove_unused_columns=False \
                 --max_steps=${MAX_STEPS} \
