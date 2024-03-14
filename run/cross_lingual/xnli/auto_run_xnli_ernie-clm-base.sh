@@ -5,8 +5,8 @@ set -e
 export PYTHONPATH=$PYTHONPATH:src/
 
 # ==== 设置ckpt step ====
-step=12500 # 指定你的ckpt步数
-PT_TYPE=ernie-pixel-only # 指定你的预训练类型
+step=25000 # 指定你的ckpt步数
+PT_TYPE=ernie-clm-base # 指定你的预训练类型
 # =======================
 
 
@@ -16,10 +16,10 @@ MODEL=pretrained_models/$PT_TYPE/checkpoint-${step}/
 CKPT_NAME=ckpt-${step}
 
 # ===== train-all; ft text =====
-LOG_DIR=log/cross_lingual/xnli/train_all/$PT_TYPE/$CKPT_NAME
-mkdir -p $LOG_DIR
-bash run/cross_lingual/xnli/train_all/$PT_TYPE/ft_ernie-pixel_mono_xnli_text.sh $MODEL > $LOG_DIR/${CKPT_NAME}_text.log 2>&1
-sleep 60
+# LOG_DIR=log/cross_lingual/xnli/train_all/$PT_TYPE/$CKPT_NAME
+# mkdir -p $LOG_DIR
+# bash run/cross_lingual/xnli/train_all/$PT_TYPE/ft_ernie-pixel_mono_xnli_text.sh $MODEL > $LOG_DIR/${CKPT_NAME}_text.log 2>&1
+# sleep 60
 
 # ===== train-en; ft text =====
 LOG_DIR=log/cross_lingual/xnli/train_en/$PT_TYPE/$CKPT_NAME
