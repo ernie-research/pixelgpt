@@ -106,10 +106,6 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-<<<<<<< HEAD
-                --bf16 \
-=======
->>>>>>> 9697392f35756d109407308edbc9dbc31a5193d1
                 --seed=${SEED}
             done
     done
