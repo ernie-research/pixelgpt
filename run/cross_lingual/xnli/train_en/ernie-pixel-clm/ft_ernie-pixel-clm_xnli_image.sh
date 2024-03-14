@@ -16,24 +16,24 @@ export PYTHONPATH=$PYTHONPATH:src/
 NUM_NODE=8
 MASTER_POART=23450
 
-MODALITY="text"
+MODALITY="image"
 
 TASK="xnli"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-SEQ_LEN=768
+SEQ_LEN=256
 BSZ=8
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=10
-EVAL_STEPS=50
-SAVE_STEPS=50
+WARMUP_STEPS=100
+EVAL_STEPS=500
+SAVE_STEPS=500
 
 # early stopping
-IS_EARLY_STOPPING=False
+IS_EARLY_STOPPING=True
 METRIC_FOR_BEST_MODEL="eval_accuracy"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
@@ -44,20 +44,22 @@ GREATER_IS_BETTER=True
 # =============
 
 
-for LR in 5e-5
+for LR in 1e-5 3e-5 5e-5 1e-4
 do
-    for GRAD_ACCUM in 1
+    for GRAD_ACCUM in 4 8
     do
         for MAX_STEPS in 15000
             do  
-                RUN_NAME="experiment/cross_lingual/xnli/ernie-pixel-only/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+                RUN_NAME="experiment/cross_lingual/xnli/train_en/ernie-pixel-clm/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
-                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training//run_ernie_xnli_translate_train_all.py \
+                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie_xnli_translate_train_en.py \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
+                --processor_name=renderers/noto_renderer \
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
-                --load_from_file=False \
+                --load_from_file=True \
+                --data_file_dir=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data \
                 --rendering_backend=${RENDERING_BACKEND} \
                 --remove_unused_columns=False \
                 --max_steps=${MAX_STEPS} \
@@ -93,3 +95,6 @@ do
             done
     done
 done
+
+# 格式化结果
+python src/utils/format_result_xnli.py $RUN_NAME

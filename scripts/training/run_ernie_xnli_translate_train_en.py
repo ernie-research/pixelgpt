@@ -83,7 +83,14 @@ check_min_version("4.17.0")
 require_version("datasets>=1.8.0", "To fix: pip install ./datasets")
 
 
-XNLI_LANGUAGES = ["en", "fr", "es", "el", "de", "bg", "ru", "tr", "ar", "vi", "th", "zh", "hi", "sw", "ur"]
+# XNLI_LANGUAGES = ["en", "fr", "es", "el", "de", "bg", "ru", "tr", "ar", "vi", "th", "zh", "hi", "sw", "ur"]
+
+XNLI_LANGUAGES_TRAIN = ["en"]
+XNLI_LANGUAGES_EVAL = ["en"]
+XNLI_LANGUAGES_PREDICT = ["en", "fr", "es", "el", "de", "bg", "ru", "tr", "ar", "vi", "th", "zh", "hi", "sw", "ur"]
+
+
+
 
 
 task_to_keys = {
@@ -507,7 +514,7 @@ def main():
                 split="train",
                 use_auth_token=model_args.use_auth_token,
             )
-            for lang in XNLI_LANGUAGES
+            for lang in XNLI_LANGUAGES_TRAIN
         ]
         eval_datasets = [
             load_dataset(
@@ -516,7 +523,7 @@ def main():
                 split="validation",
                 use_auth_token=model_args.use_auth_token,
             )
-            for lang in XNLI_LANGUAGES
+            for lang in XNLI_LANGUAGES_EVAL
         ]
         predict_datasets = [
             load_dataset(
@@ -525,7 +532,7 @@ def main():
                 split="test",
                 use_auth_token=model_args.use_auth_token,
             )
-            for lang in XNLI_LANGUAGES
+            for lang in XNLI_LANGUAGES_PREDICT
         ]
         
         raw_datasets = DatasetDict({
@@ -542,7 +549,7 @@ def main():
                 "json",
                 data_files=os.path.join(data_args.data_file_dir,  'xnli' + '-' + lang + "-" + "train", "part-00000.gz")
             )["train"]
-            for lang in XNLI_LANGUAGES
+            for lang in XNLI_LANGUAGES_TRAIN
         ]
 
         eval_datasets = [
@@ -550,7 +557,7 @@ def main():
                 "json",
                 data_files=os.path.join(data_args.data_file_dir,  'xnli' + '-' + lang + "-" + "validation", "part-00000.gz")
             )["train"]
-            for lang in XNLI_LANGUAGES
+            for lang in XNLI_LANGUAGES_EVAL
         ]
 
         predict_datasets = [
@@ -558,7 +565,7 @@ def main():
                 "json",
                 data_files=os.path.join(data_args.data_file_dir,  'xnli' + '-' + lang + "-" + "test", "part-00000.gz")
             )["train"]
-            for lang in XNLI_LANGUAGES
+            for lang in XNLI_LANGUAGES_PREDICT
         ]
 
         raw_datasets = DatasetDict({
@@ -769,7 +776,7 @@ def main():
     if training_args.do_eval:
         logger.info("*** Evaluate ***")
 
-        for lang, eval_dataset, eval_examples in zip(XNLI_LANGUAGES, eval_datasets, eval_examples_l):
+        for lang, eval_dataset, eval_examples in zip(XNLI_LANGUAGES_EVAL, eval_datasets, eval_examples_l):
             logger.info(f"Evaluating {lang}")
 
             outputs = trainer.predict(test_dataset=eval_dataset, metric_key_prefix=f"eval_{lang}")
@@ -799,7 +806,7 @@ def main():
     if training_args.do_predict:
         logger.info("*** Predict ***")
 
-        for lang, predict_dataset, predict_examples in zip(XNLI_LANGUAGES, predict_datasets, predict_examples_l):
+        for lang, predict_dataset, predict_examples in zip(XNLI_LANGUAGES_PREDICT, predict_datasets, predict_examples_l):
             logger.info(f"Predicting {lang}")
 
             outputs = trainer.predict(test_dataset=predict_dataset, metric_key_prefix=f"test_{lang}")
@@ -828,10 +835,10 @@ def main():
 
     kwargs = {"finetuned_from": model_args.model_name_or_path, "tasks": "text-classification"}
     if data_args.dataset_name is not None:
-        kwargs["language"] = XNLI_LANGUAGES
-        kwargs["dataset_tags"] = "xnli-translate-train-all"
-        kwargs["dataset_args"] = "xnli-translate-train-all"
-        kwargs["dataset"] = "xnli-translate-train-all"
+        kwargs["language"] = XNLI_LANGUAGES_TRAIN
+        kwargs["dataset_tags"] = "xnli-translate-train-en"
+        kwargs["dataset_args"] = "xnli-translate-train-en"
+        kwargs["dataset"] = "xnli-translate-train-en"
 
     if training_args.push_to_hub:
         trainer.push_to_hub(**kwargs)

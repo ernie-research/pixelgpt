@@ -4,8 +4,6 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
-export CUDA_VISIBLE_DEVICES=4,5,6,7
-
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
 # A clear indicator of this is when the training loss is not decreasing substantially within the first 1k-3k steps
@@ -15,52 +13,53 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=4
-MASTER_POART=23457
-MODALITY="text"
+NUM_NODE=8
+MASTER_POART=23450
 
-TASK="stsb"
+MODALITY="image"
+
+TASK="xnli"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-SEQ_LEN=768
+SEQ_LEN=256
 BSZ=8
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
 MAX_STEPS=None
 
-WARMUP_STEPS=10
-EVAL_STEPS=50
-SAVE_STEPS=50
+WARMUP_STEPS=100
+EVAL_STEPS=500
+SAVE_STEPS=500
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_spearmanr"
+METRIC_FOR_BEST_MODEL="eval_accuracy"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
-
 
 
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 5e-5
-do
-    for GRAD_ACCUM in 2
-    do
-        for MAX_STEPS in 2000
-            do
-                RUN_NAME="ernie-clm-base/$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
-                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
+for LR in 1e-5 3e-5 5e-5 1e-4
+do
+    for GRAD_ACCUM in 4 8
+    do
+        for MAX_STEPS in 15000
+            do  
+                RUN_NAME="experiment/cross_lingual/xnli/train_all/ernie-pixel-clm/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
+
+                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training//run_ernie_xnli_translate_train_all.py \
                 --model_name_or_path=${MODEL} \
+                --model_type=ernie-pixel \
+                --processor_name=renderers/noto_renderer \
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
-                --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-train/part-00000.gz \
-                --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-validation/part-00000.gz \
-                --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-test/part-00000.gz \
+                --data_file_dir=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data \
                 --rendering_backend=${RENDERING_BACKEND} \
                 --remove_unused_columns=False \
                 --max_steps=${MAX_STEPS} \
@@ -68,9 +67,9 @@ do
                 --do_eval \
                 --do_predict \
                 --max_seq_length=${SEQ_LEN} \
-                --early_stopping=False \
                 --warmup_steps=${WARMUP_STEPS} \
                 --per_device_train_batch_size=${BSZ} \
+                --per_device_eval_batch_size=8 \
                 --gradient_accumulation_steps=${GRAD_ACCUM} \
                 --learning_rate=${LR} \
                 --run_name=${RUN_NAME} \
@@ -91,7 +90,11 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --seed=${SEED}
+                --seed=${SEED} \
+                --fp16
             done
     done
 done
+
+# 格式化结果
+python src/utils/format_result_xnli.py $RUN_NAME
