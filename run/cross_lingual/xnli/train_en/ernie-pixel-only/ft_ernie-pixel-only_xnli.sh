@@ -59,7 +59,7 @@ do
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
-                --data_file_dir=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data \
+                --data_file_dir=data/xnli \
                 --rendering_backend=${RENDERING_BACKEND} \
                 --remove_unused_columns=False \
                 --max_steps=${MAX_STEPS} \
