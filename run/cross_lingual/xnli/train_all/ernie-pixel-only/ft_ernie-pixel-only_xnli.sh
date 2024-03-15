@@ -91,7 +91,7 @@ do
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
                 --seed=${SEED} \
-                --fp16
+                --bf16
 
                 # 格式化结果
                 python src/utils/format_result_xnli.py $RUN_NAME
