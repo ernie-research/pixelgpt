@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from fire import Fire
+from collections import OrderedDict
 
 def find_files(directory, pattern):
     for root, dirs, files in os.walk(directory):
@@ -9,11 +10,34 @@ def find_files(directory, pattern):
                 filename = os.path.join(root, basename)
                 yield filename
 
+XNLI_LANGUAGES = ["en", "ar", "bg", "de", "el", "fr", "hi", "ru", "es", "sw", "th", "tr", "ur", "vi", "zh"]
+
+
 def main(dir):
     results = []
 
-    for filename in find_files(dir, 'all_result.csv'):
-        df = pd.read_csv(filename)
+    for filename in find_files(dir, 'all_results.json'):
+
+        
+        res_df = pd.read_json(filename, typ='series')
+
+        res_dict = OrderedDict()
+        
+        avg = 0.
+
+        for lan in XNLI_LANGUAGES:
+            key = 'test' + '_' + lan + '_' + 'accuracy'
+            val = res_df[key]
+            res_dict[key] = round(val * 100., 1)
+            avg += val
+        
+        res_dict['Avg'] = round((avg / len(XNLI_LANGUAGES))*100., 1)
+
+        
+
+        df = pd.DataFrame([res_dict])
+
+        # df = pd.read_csv(filename)
         df.index = [os.path.basename(os.path.dirname(filename))] * len(df)
         results.append(df)
 
