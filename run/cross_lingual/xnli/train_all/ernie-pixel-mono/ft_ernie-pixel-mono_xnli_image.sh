@@ -13,7 +13,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=1
+NUM_NODE=8
 MASTER_POART=23450
 
 MODALITY="image"
