@@ -25,7 +25,9 @@ def main(dir, metric):
         
         avg = 0.
 
-        
+        if metric not in res_df:
+            print(f'{filename} does not have {metric}, skip it')
+            continue
         val = res_df[metric]
         res_dict[metric] = round(val * 100., 1)
         avg += val
