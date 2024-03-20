@@ -42,7 +42,7 @@ def main(dir, metric):
 
     results_df = pd.concat(results)
     sorted_results = results_df.sort_values(by=metric)
-    sorted_results.to_csv(os.path.join(dir, 'all_result_sorted.csv'))
+    sorted_results.to_csv(os.path.join(dir, f'all_result_{metric}_sorted.csv'))
 
 if __name__ == '__main__':
     Fire(main)
