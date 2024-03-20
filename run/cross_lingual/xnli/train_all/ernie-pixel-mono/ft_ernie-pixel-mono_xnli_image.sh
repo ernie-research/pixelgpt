@@ -13,7 +13,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 # the recipes used in the paper may not be the best ones out there
 
 # =====================Settings========================
-NUM_NODE=1
+NUM_NODE=8
 MASTER_POART=23450
 
 MODALITY="image"
@@ -92,9 +92,6 @@ do
                 --load_best_model_at_end=True \
                 --seed=${SEED} \
                 --fp16
-
-                # 格式化结果
-                python src/utils/format_result_xnli.py $RUN_NAME
             done
     done
 done
