@@ -648,6 +648,8 @@ def main():
             modality = Modality.TEXT
         elif model_args.modality == "image":
             modality = Modality.IMAGE
+        elif model_args.modality == "image-text":
+            modality = Modality.IMAGE_TEXT
         else:
             raise ValueError(f"modality {model_args.modality} not supported")
         
