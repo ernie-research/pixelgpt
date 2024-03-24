@@ -161,6 +161,7 @@ class RandomErasing(torch.nn.Module):
 
 def get_transforms(
     do_resize: bool = True,
+    do_crop: bool = False,
     size: Union[int, Tuple[int, int]] = (16, 8464),
     do_squarify: bool = False,
     do_normalize: bool = False,
@@ -212,6 +213,10 @@ def get_transforms(
     # Optionally, resize to specified size
     if do_resize and size:
         transforms.append(Resize(size=size, interpolation=InterpolationMode.BICUBIC))
+    
+    # Optionally, crop to specified size
+    if do_crop and size:
+        transforms.append(Lambda(lambda img: F.crop(img, top=0, left=0, height=size[0], width=size[1])))
 
     # Tensorize image
     transforms.append(ToTensor())

@@ -25,13 +25,13 @@ import os
 import random
 import sys
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import datasets
 import numpy as np
 import torch
 import transformers
-from datasets import load_dataset, load_metric
+from datasets import concatenate_datasets, load_dataset, load_metric, DatasetDict
 from PIL import Image
 from pixel import (
     # AutoConfig,
@@ -82,16 +82,19 @@ check_min_version("4.17.0")
 
 require_version("datasets>=1.8.0", "To fix: pip install ./datasets")
 
+
+# XNLI_LANGUAGES = ["en", "fr", "es", "el", "de", "bg", "ru", "tr", "ar", "vi", "th", "zh", "hi", "sw", "ur"]
+
+XNLI_LANGUAGES_TRAIN = ["en"]
+XNLI_LANGUAGES_EVAL = ["en"]
+XNLI_LANGUAGES_PREDICT = ["en", "fr", "es", "el", "de", "bg", "ru", "tr", "ar", "vi", "th", "zh", "hi", "sw", "ur"]
+
+
+
+
+
 task_to_keys = {
-    "cola": ("sentence", None),
-    "mnli": ("premise", "hypothesis"),
-    "mrpc": ("sentence1", "sentence2"),
-    "qnli": ("question", "sentence"),
-    "qqp": ("question1", "question2"),
-    "rte": ("sentence1", "sentence2"),
-    "sst2": ("sentence", None),
-    "stsb": ("sentence1", "sentence2"),
-    "wnli": ("sentence1", "sentence2"),
+    "xnli": ("premise", "hypothesis"),
 }
 
 logger = logging.getLogger(__name__)
@@ -155,18 +158,8 @@ class DataTrainingArguments:
             "value if set."
         },
     )
-    train_file: Optional[str] = field(
-        default=None, metadata={"help": "A csv or a json file containing the training data."}
-    )
-    validation_file: Optional[str] = field(
-        default=None, metadata={"help": "A csv or a json file containing the validation data."}
-    )
-    test_file: Optional[str] = field(default=None, metadata={"help": "A csv or a json file containing the test data."})
-    validation_matched_file: Optional[str] = field(
-        default=None, metadata={"help": "A csv or a json file containing the mismatched validation data."}
-    )
-    test_matched_file: Optional[str] = field(
-        default=None, metadata={"help": "A csv or a json file containing the mismatched test data."}
+    data_file_dir: Optional[str] = field(
+        default=None, metadata={"help": "directory containing the data files"}
     )
     load_from_file: bool = field(
         default=False, metadata={"help": "Load dataset from file or not."}
@@ -181,15 +174,7 @@ class DataTrainingArguments:
                 raise ValueError("Unknown task, you should pick one in " + ",".join(task_to_keys.keys()))
         elif self.dataset_name is not None:
             pass
-        elif self.train_file is None or self.validation_file is None:
-            raise ValueError("Need either a GLUE task, a training/validation file or a dataset name.")
-        else:
-            train_extension = self.train_file.split(".")[-1]
-            assert train_extension in ["csv", "json", "gz"], "`train_file` should be a csv or a json file."
-            validation_extension = self.validation_file.split(".")[-1]
-            assert (
-                validation_extension == train_extension
-            ), "`validation_file` should have the same extension (csv or json) as `train_file`."
+
 
 
 @dataclass
@@ -301,6 +286,35 @@ def get_processor(model_args: argparse.Namespace, modality: Modality):
             fallback_fonts_dir=model_args.fallback_fonts_dir,
             rgb=model_args.render_rgb,
         )
+    elif modality == Modality.IMAGE_TEXT:
+        processor = {}
+
+        # Text Tokenizer
+        text_processor = AutoTokenizer.from_pretrained(
+            model_args.processor_name.split(",")[0],
+            use_fast=True,
+            add_prefix_space=True if model_args.model_name_or_path == "roberta-base" else False,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=model_args.use_auth_token if model_args.use_auth_token else None,
+        )
+        # 增加llama模型
+        text_processor.pad_token = text_processor.eos_token
+        logger.info("Set pad token to eos_token: {} ({})".format(text_processor.eos_token, text_processor.eos_token_id))
+
+        #
+        renderer_cls = PyGameTextRenderer if model_args.rendering_backend == "pygame" else PangoCairoTextRenderer
+        image_processor = renderer_cls.from_pretrained(
+            model_args.processor_name.split(",")[1],
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=model_args.use_auth_token if model_args.use_auth_token else None,
+            fallback_fonts_dir=model_args.fallback_fonts_dir,
+            rgb=model_args.render_rgb,
+        )
+
+        processor['text'] = text_processor
+        processor['image'] = image_processor
     else:
         raise ValueError("Modality not supported.")
     return processor
@@ -351,6 +365,41 @@ def get_model_and_config(model_args: argparse.Namespace, num_labels: int, task_n
 
     return model, config
 
+@dataclass
+class ImageTextCollator:
+    padding: Union[bool, str] = True
+    max_length: Optional[int] = None
+    pad_to_multiple_of: Optional[int] = None
+    return_tensors: str = "pt"
+    tokenizer: Any = None
+    is_regression: bool = False
+    def __call__(self, examples):
+        # Collate Text
+        text_inputs = {'input_ids': [e['input_ids'] for e in examples], 'attention_mask': [e['attention_mask'] for e in examples]}
+        batch = self.tokenizer.pad(
+            text_inputs,
+            padding=self.padding,
+            max_length=self.max_length,
+            pad_to_multiple_of=self.pad_to_multiple_of,
+            return_tensors=self.return_tensors,
+        )
+        if "label" in batch:
+            batch["labels"] = batch["label"]
+            del batch["label"]
+        if "label_ids" in batch:
+            batch["labels"] = batch["label_ids"]
+            del batch["label_ids"]
+
+        # Collate Image
+        pixel_values = torch.stack([example["pixel_values"] for example in examples])
+        patch_attention_mask = torch.stack([example["patch_attention_mask"] for example in examples])
+        if "label" in examples[0]:
+            if self.is_regression:
+                labels = torch.FloatTensor([example["label"] for example in examples])
+            else:
+                labels = torch.LongTensor([example["label"] for example in examples])
+            return {**batch, "pixel_values": pixel_values, "patch_attention_mask": patch_attention_mask, "labels": labels}
+        return {**batch, "pixel_values": pixel_values, "patch_attention_mask": patch_attention_mask}
 
 
 def get_collator(
@@ -374,6 +423,8 @@ def get_collator(
         collator = image_collate_fn
     elif modality == Modality.TEXT:
         collator = DataCollatorWithPadding(processor, pad_to_multiple_of=8) if training_args.fp16 else None
+    elif modality == Modality.IMAGE_TEXT:
+        collator = ImageTextCollator(tokenizer=processor['text'], is_regression=is_regression)
     else:
         raise ValueError(f"Modality {modality} not supported.")
 
@@ -451,6 +502,41 @@ def get_preprocess_fn(
             return result
 
         preprocess_fn = text_preprocess_fn
+    elif modality == Modality.IMAGE_TEXT:
+        assert isinstance(processor, dict), "Image-Text modality requires a dict of processors."
+        text_processor = processor['text']
+        img_processor = processor['image']
+
+        transforms = get_transforms(
+            do_resize=False,
+            do_crop=True,
+            size=(img_processor.pixels_per_patch, img_processor.pixels_per_patch * img_processor.max_seq_length),
+        )
+        
+        def image_text_preprocess_fn(examples):
+            # Tokenize the texts
+            args = (
+                (examples[sentence1_key],)
+                if sentence2_key is None
+                else (examples[sentence1_key], examples[sentence2_key])
+            )
+            result = text_processor(*args, padding=True, max_length=data_args.max_seq_length, truncation=True)
+
+            # if "label" in examples:
+            #     result["label"] = [l for l in examples["label"]]
+            examples["input_ids"] = result["input_ids"]
+            examples["attention_mask"] = result["attention_mask"]
+                
+            examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
+            examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
+
+            examples["patch_attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
+
+            examples.pop("image")
+
+            return examples
+        
+        preprocess_fn=image_text_preprocess_fn
     else:
         raise ValueError(f"Modality {modality} not supported.")
 
@@ -521,42 +607,74 @@ def main():
     # download the dataset.
     if data_args.task_name is not None and not data_args.load_from_file:
         # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset("/root/paddlejob/workspace/env_run/liuqingyi01/data/eval_data/datasets--glue", data_args.task_name, cache_dir=model_args.cache_dir)
-    elif data_args.dataset_name is not None and not data_args.load_from_file:
-        # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset(
-            data_args.dataset_name, data_args.dataset_config_name, cache_dir=model_args.cache_dir
-        )
+
+        train_datasets = [
+            load_dataset(
+                '/root/paddlejob/workspace/env_run/liuqingyi01/data/eval_data/datasets--xnli/',
+                lang,
+                split="train",
+                use_auth_token=model_args.use_auth_token,
+            )
+            for lang in XNLI_LANGUAGES_TRAIN
+        ]
+        eval_datasets = [
+            load_dataset(
+                '/root/paddlejob/workspace/env_run/liuqingyi01/data/eval_data/datasets--xnli/',
+                lang,
+                split="validation",
+                use_auth_token=model_args.use_auth_token,
+            )
+            for lang in XNLI_LANGUAGES_EVAL
+        ]
+        predict_datasets = [
+            load_dataset(
+                '/root/paddlejob/workspace/env_run/liuqingyi01/data/eval_data/datasets--xnli/',
+                lang,
+                split="test",
+                use_auth_token=model_args.use_auth_token,
+            )
+            for lang in XNLI_LANGUAGES_PREDICT
+        ]
+        
+        raw_datasets = DatasetDict({
+            "train": concatenate_datasets(train_datasets),
+            "validation": concatenate_datasets(eval_datasets),
+            "test": concatenate_datasets(predict_datasets),
+        })
     else:
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
-        if data_args.task_name == "mnli":
-            data_files = {"train": data_args.train_file, "validation_mismatched": data_args.validation_file, "test_mismatched": data_args.test_file, "validation_matched": data_args.validation_matched_file, "test_matched": data_args.test_matched_file}
-        else:
-            data_files = {"train": data_args.train_file, "validation": data_args.validation_file, "test": data_args.test_file}
+        # Loading a dataset from local json files
+        train_datasets = [
+            load_dataset(
+                "json",
+                data_files=os.path.join(data_args.data_file_dir,  'xnli' + '-' + lang + "-" + "train", "part-00000.gz")
+            )["train"]
+            for lang in XNLI_LANGUAGES_TRAIN
+        ]
 
-        # Get the test dataset: you can provide your own CSV/JSON test file (see below)
-        # when you use `do_predict` without specifying a GLUE benchmark task.
-        if training_args.do_predict:
-            if data_args.test_file is not None:
-                train_extension = data_args.train_file.split(".")[-1]
-                test_extension = data_args.test_file.split(".")[-1]
-                assert (
-                    test_extension == train_extension
-                ), "`test_file` should have the same extension (csv or json) as `train_file`."
-                data_files["test"] = data_args.test_file
-            else:
-                raise ValueError("Need either a GLUE task or a test file for `do_predict`.")
+        eval_datasets = [
+            load_dataset(
+                "json",
+                data_files=os.path.join(data_args.data_file_dir,  'xnli' + '-' + lang + "-" + "validation", "part-00000.gz")
+            )["train"]
+            for lang in XNLI_LANGUAGES_EVAL
+        ]
 
-        for key in data_files.keys():
-            logger.info(f"load a local file for {key}: {data_files[key]}")
+        predict_datasets = [
+            load_dataset(
+                "json",
+                data_files=os.path.join(data_args.data_file_dir,  'xnli' + '-' + lang + "-" + "test", "part-00000.gz")
+            )["train"]
+            for lang in XNLI_LANGUAGES_PREDICT
+        ]
 
-        if data_args.train_file.endswith(".csv"):
-            # Loading a dataset from local csv files
-            raw_datasets = load_dataset("csv", data_files=data_files, cache_dir=model_args.cache_dir)
-        else:
-            # Loading a dataset from local json files
-            raw_datasets = load_dataset("json", data_files=data_files, cache_dir=model_args.cache_dir)
+        raw_datasets = DatasetDict({
+            "train": concatenate_datasets(train_datasets),
+            "validation": concatenate_datasets(eval_datasets),
+            "test": concatenate_datasets(predict_datasets),
+        })
+
     # See more about loading any type of standard or custom dataset at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
@@ -566,13 +684,13 @@ def main():
     if data_args.task_name is not None and not data_args.load_from_file:
         is_regression = data_args.task_name == "stsb"
         if not is_regression:
-            label_list = raw_datasets["train"].features["label"].names
+            label_list = raw_datasets['train'].features["label"].names
             num_labels = len(label_list)
         else:
             num_labels = 1
     else:
         # Trying to have good defaults here, don't hesitate to tweak to your needs.
-        is_regression = raw_datasets["train"].features["label"].dtype in ["float32", "float64"]
+        is_regression = raw_datasets['train'].features["label"].dtype in ["float32", "float64"]
         if is_regression:
             num_labels = 1
         else:
@@ -658,111 +776,46 @@ def main():
     if modality == Modality.IMAGE:
         if processor.max_seq_length != data_args.max_seq_length:
             processor.max_seq_length = data_args.max_seq_length
+    if modality == Modality.IMAGE_TEXT:
+        if processor['image'].max_seq_length != data_args.max_seq_length:
+            processor['image'].max_seq_length = data_args.max_seq_length
+
 
         # resize_model_embeddings(model, processor.max_seq_length)
     # ===================================================================================
 
     # ======== Preprocessing the datasets ========
     preprocess_fn = get_preprocess_fn(data_args, processor, modality, (sentence1_key, sentence2_key))
-    # ============================================
-
-    # # ======== 图像预处理函数 =======================
-    # if modality == Modality.IMAGE:
-    #     image_height = processor.pixels_per_patch
-    #     image_width = processor.pixels_per_patch * processor.max_seq_length
-    #     image_mean, image_std = (None, None)
-    #     transforms = get_transforms(
-    #         do_resize=True,
-    #         size=(image_height, image_width),
-    #         do_normalize=False,
-    #         image_mean=image_mean,
-    #         image_std=image_std,
-    #     )       
-    #     def pixel_preprocess_function(examples):
-    #         """Preprocess a batch of images by applying transforms."""
-            
-    #         examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
-    #         examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
-    #         examples["attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
-
-    #         return examples
-    # elif modality == Modality.TEXT:
-    #     def text_preprocess_fn(examples):
-    #         # Tokenize the texts
-    #         args = (
-    #             (examples[sentence1_key],)
-    #             if sentence2_key is None
-    #             else (examples[sentence1_key], examples[sentence2_key])
-    #         )
-    #         result = processor(*args, padding=True, max_length=data_args.max_seq_length, truncation=True)
-
-    #         if "label" in examples:
-    #             result["label"] = [l for l in examples["label"]]
-    #         return examples
-
+    
     if training_args.do_train:
-        if "train" not in raw_datasets:
-            raise ValueError("--do_train requires a train dataset")
-        train_dataset = raw_datasets["train"]
-        # debug ###############################################################
-        # print("train dataset debug")
-        # train_dataset = raw_datasets["train"].select(range(32))
-        #######################################################################
+        train_dataset = raw_datasets['train']
         if data_args.max_train_samples is not None:
             train_dataset = train_dataset.select(range(data_args.max_train_samples))
         if modality == Modality.IMAGE:
             train_dataset.features["pixel_values"] = datasets.Image()
         train_dataset.set_transform(preprocess_fn)
-        # if modality == Modality.IMAGE:
-        #     train_dataset = train_dataset.map(
-        #                 pixel_preprocess_function,
-        #                 batched=True,
-        #                 # num_proc=48,
-        #                 remove_columns="image",
-        #                 load_from_cache_file=False,
-        #                 desc="Running image preprocess on dataset",
-        #             )
-        # elif modality == Modality.TEXT:
-        #     train_dataset = train_dataset.map(
-        #                 text_preprocess_fn,
-        #                 batched=True,
-        #                 # num_proc=48,
-        #                 load_from_cache_file=False,
-        #                 desc="Running text preprocess on dataset",
-        #             )
 
     if training_args.do_eval:
-        if "validation" not in raw_datasets and "validation_matched" not in raw_datasets:
-            raise ValueError("--do_eval requires a validation dataset")
-        eval_dataset = raw_datasets["validation_matched" if data_args.task_name == "mnli" else "validation"]
+        eval_dataset = raw_datasets['validation']
         if data_args.max_eval_samples is not None:
             eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
+            eval_datasets = [eval_dataset.select(range(data_args.max_eval_samples)) for eval_dataset in eval_datasets ]
         if modality == Modality.IMAGE:
             eval_dataset.features["pixel_values"] = datasets.Image()
-        eval_examples = copy.deepcopy(eval_dataset)
+        eval_examples_l = [copy.deepcopy(e) for e in eval_datasets]
         eval_dataset.set_transform(preprocess_fn)
-        # ======= Debug =============
-        # if modality == Modality.TEXT:
-        #     eval_dataset.set_transform(preprocess_fn)
-        # else:
-        #     eval_dataset = eval_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-        #     eval_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
+        [e.set_transform(preprocess_fn) for e in eval_datasets]
 
-    if training_args.do_predict or data_args.task_name is not None or data_args.test_file is not None:
-        if "test" not in raw_datasets and "test_matched" not in raw_datasets:
-            raise ValueError("--do_predict requires a test dataset")
-        predict_dataset = raw_datasets["test_matched" if data_args.task_name == "mnli" else "test"]
+    if training_args.do_predict:
+        predict_dataset = raw_datasets['test']
         if data_args.max_predict_samples is not None:
             predict_dataset = predict_dataset.select(range(data_args.max_predict_samples))
+            predict_datasets = [predict_dataset.select(range(data_args.max_predict_samples)) for predict_dataset in predict_datasets ]
         if modality == Modality.IMAGE:
             predict_dataset.features["pixel_values"] = datasets.Image()
+        predict_examples_l = [copy.deepcopy(e) for e in predict_datasets]
         predict_dataset.set_transform(preprocess_fn)
-        # ======= Debug =============
-        # if modality == Modality.TEXT:
-        #     predict_dataset.set_transform(preprocess_fn)
-        # else:
-        #     predict_dataset = predict_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-        #     predict_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
+        [e.set_transform(preprocess_fn) for e in predict_datasets]
 
     # Log a few random samples from the training set:
     # if training_args.do_train:
@@ -774,12 +827,7 @@ def main():
     #         logger.info(f"Sample {index} of the eval set: {eval_dataset[index]}.")
 
     # Get the metric function
-    if data_args.task_name is not None:
-        # metric = load_metric("glue", data_args.task_name)
-        metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/glue/glue.py", data_args.task_name)
-    else:
-        # metric = load_metric("accuracy")
-        metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/accuracy/accuracy.py")
+    metric = load("/root/paddlejob/workspace/liuqingyi01/code/ernie-pixel-ft/evaluate/metrics/xnli/xnli.py")
 
     # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
@@ -803,7 +851,7 @@ def main():
         train_dataset=train_dataset if training_args.do_train else None,
         eval_dataset=eval_dataset if training_args.do_eval else None,
         compute_metrics=compute_metrics,
-        tokenizer=processor,
+        tokenizer=processor['image'] if modality == Modality.IMAGE_TEXT else processor,
         data_collator=get_collator(training_args, processor, modality, is_regression=is_regression),
         callbacks=[EarlyStoppingCallback(early_stopping_patience=training_args.early_stopping_patience)]
         if training_args.early_stopping
@@ -835,27 +883,13 @@ def main():
     if training_args.do_eval:
         logger.info("*** Evaluate ***")
 
-        # Loop to handle MNLI double evaluation (matched, mis-matched)
-        tasks = [data_args.task_name]
-        eval_datasets = [eval_dataset]
-        eval_examples_l = [eval_examples]
+        for lang, eval_dataset, eval_examples in zip(XNLI_LANGUAGES_EVAL, eval_datasets, eval_examples_l):
+            logger.info(f"Evaluating {lang}")
 
-        if data_args.task_name == "mnli":
-            tasks.append("mnli-mm")
-            mismatched_eval_dataset = raw_datasets["validation_mismatched"]
-            mismatched_eval_examples = copy.deepcopy(mismatched_eval_dataset)
-            eval_examples_l.append(mismatched_eval_examples)
-            if modality == Modality.IMAGE:
-                mismatched_eval_dataset.features["pixel_values"] = datasets.Image()
-            mismatched_eval_dataset.set_transform(preprocess_fn)
-            eval_datasets.append(mismatched_eval_dataset)
-
-        for eval_dataset, eval_examples, task in zip(eval_datasets, eval_examples_l, tasks):
-            logger.info(f"Task name is {task}")
-            outputs = trainer.predict(test_dataset=eval_dataset, metric_key_prefix=f"eval_{task}")
+            outputs = trainer.predict(test_dataset=eval_dataset, metric_key_prefix=f"eval_{lang}")
             metrics = outputs.metrics
 
-            # Log predictions
+            # Log predictions to understand where model goes wrong
             if training_args.log_predictions:
                 log_sequence_classification_predictions(
                     training_args=training_args,
@@ -865,7 +899,7 @@ def main():
                     sentence1_key=sentence1_key,
                     sentence2_key=sentence2_key,
                     modality=modality,
-                    prefix=task,
+                    prefix=f"eval_{lang}",
                 )
 
             max_eval_samples = (
@@ -873,47 +907,45 @@ def main():
             )
             metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
 
-            trainer.log_metrics(f"eval_{task}", metrics)
-            trainer.save_metrics(f"eval_{task}", metrics)
+            trainer.log_metrics(f"eval_{lang}", metrics)
+            trainer.save_metrics(f"eval_{lang}", metrics)
 
     if training_args.do_predict:
         logger.info("*** Predict ***")
 
-        # Loop to handle MNLI double evaluation (matched, mismatched)
-        tasks = [data_args.task_name]
-        predict_datasets = [predict_dataset]
-        if data_args.task_name == "mnli":
-            tasks.append("mnli-mm")
-            mismatched_test_dataset = raw_datasets["test_mismatched"]
-            if modality == Modality.IMAGE:
-                mismatched_test_dataset.features["pixel_values"] = datasets.Image()
-            mismatched_test_dataset.set_transform(preprocess_fn)
-            predict_datasets.append(mismatched_test_dataset)
+        for lang, predict_dataset, predict_examples in zip(XNLI_LANGUAGES_PREDICT, predict_datasets, predict_examples_l):
+            logger.info(f"Predicting {lang}")
 
-        for predict_dataset, task in zip(predict_datasets, tasks):
-            # Removing the `label` columns because it contains -1 and Trainer won't like that.
-            predict_dataset = predict_dataset.remove_columns("label")
-            predictions = trainer.predict(predict_dataset, metric_key_prefix=f"predict_{task}").predictions
-            predictions = np.squeeze(predictions) if is_regression else np.argmax(predictions, axis=1)
+            outputs = trainer.predict(test_dataset=predict_dataset, metric_key_prefix=f"test_{lang}")
+            metrics = outputs.metrics
 
-            output_predict_file = os.path.join(training_args.output_dir, f"predict_results_{task}.txt")
-            if trainer.is_world_process_zero():
-                with open(output_predict_file, "w") as writer:
-                    logger.info(f"***** Predict results {task} *****")
-                    writer.write("index\tprediction\n")
-                    for index, item in enumerate(predictions):
-                        if is_regression:
-                            writer.write(f"{index}\t{item:3.3f}\n")
-                        else:
-                            item = label_list[item]
-                            writer.write(f"{index}\t{item}\n")
+            # Log predictions to understand where model goes wrong
+            if training_args.log_predictions:
+                log_sequence_classification_predictions(
+                    training_args=training_args,
+                    features=predict_dataset,
+                    examples=predict_examples,
+                    predictions=outputs.predictions,
+                    sentence1_key=sentence1_key,
+                    sentence2_key=sentence2_key,
+                    modality=modality,
+                    prefix=f"test_{lang}",
+                )
+
+            max_predict_samples = (
+                data_args.max_predict_samples if data_args.max_predict_samples is not None else len(predict_dataset)
+            )
+            metrics["predict_samples"] = min(max_predict_samples, len(eval_dataset))
+
+            trainer.log_metrics(f"test_{lang}", metrics)
+            trainer.save_metrics(f"test_{lang}", metrics)
 
     kwargs = {"finetuned_from": model_args.model_name_or_path, "tasks": "text-classification"}
-    if data_args.task_name is not None:
-        kwargs["language"] = "en"
-        kwargs["dataset_tags"] = "glue"
-        kwargs["dataset_args"] = data_args.task_name
-        kwargs["dataset"] = f"GLUE {data_args.task_name.upper()}"
+    if data_args.dataset_name is not None:
+        kwargs["language"] = XNLI_LANGUAGES_TRAIN
+        kwargs["dataset_tags"] = "xnli-translate-train-en"
+        kwargs["dataset_args"] = "xnli-translate-train-en"
+        kwargs["dataset"] = "xnli-translate-train-en"
 
     if training_args.push_to_hub:
         trainer.push_to_hub(**kwargs)

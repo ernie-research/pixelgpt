@@ -45,6 +45,8 @@ def log_sequence_classification_predictions(
                 processed_input = None
             elif modality == Modality.TEXT:
                 processed_input = feature["input_ids"]
+            elif modality == Modality.IMAGE_TEXT:
+                processed_input = None
             else:
                 raise ValueError(f"Modality {modality} not supported.")
 

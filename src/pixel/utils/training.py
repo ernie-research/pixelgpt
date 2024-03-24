@@ -12,6 +12,7 @@ from .misc import format_img, format_mask, mark_answer
 class Modality(Enum):
     IMAGE = auto()
     TEXT = auto()
+    IMAGE_TEXT = auto()
 
 
 @dataclass
