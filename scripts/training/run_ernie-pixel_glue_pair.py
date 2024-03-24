@@ -25,7 +25,7 @@ import os
 import random
 import sys
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import datasets
 import numpy as np
@@ -59,7 +59,7 @@ from transformers import (
     HfArgumentParser,
     PretrainedConfig,
     PreTrainedTokenizerFast,
-    set_seed,
+    set_seed
 )
 
 from evaluate import load
@@ -301,6 +301,35 @@ def get_processor(model_args: argparse.Namespace, modality: Modality):
             fallback_fonts_dir=model_args.fallback_fonts_dir,
             rgb=model_args.render_rgb,
         )
+    elif modality == Modality.IMAGE_TEXT:
+        processor = {}
+
+        # Text Tokenizer
+        text_processor = AutoTokenizer.from_pretrained(
+            model_args.processor_name.split(",")[0],
+            use_fast=True,
+            add_prefix_space=True if model_args.model_name_or_path == "roberta-base" else False,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=model_args.use_auth_token if model_args.use_auth_token else None,
+        )
+        # 增加llama模型
+        text_processor.pad_token = text_processor.eos_token
+        logger.info("Set pad token to eos_token: {} ({})".format(text_processor.eos_token, text_processor.eos_token_id))
+
+        #
+        renderer_cls = PyGameTextRenderer if model_args.rendering_backend == "pygame" else PangoCairoTextRenderer
+        image_processor = renderer_cls.from_pretrained(
+            model_args.processor_name.split(",")[1],
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=model_args.use_auth_token if model_args.use_auth_token else None,
+            fallback_fonts_dir=model_args.fallback_fonts_dir,
+            rgb=model_args.render_rgb,
+        )
+
+        processor['text'] = text_processor
+        processor['image'] = image_processor
     else:
         raise ValueError("Modality not supported.")
     return processor
@@ -351,11 +380,46 @@ def get_model_and_config(model_args: argparse.Namespace, num_labels: int, task_n
 
     return model, config
 
+@dataclass
+class ImageTextCollator:
+    padding: Union[bool, str] = True
+    max_length: Optional[int] = None
+    pad_to_multiple_of: Optional[int] = None
+    return_tensors: str = "pt"
+    tokenizer: Any = None
+    is_regression: bool = False
+    def __call__(self, examples):
+        # Collate Text
+        text_inputs = {'input_ids': [e['input_ids'] for e in examples], 'attention_mask': [e['attention_mask'] for e in examples]}
+        batch = self.tokenizer.pad(
+            text_inputs,
+            padding=self.padding,
+            max_length=self.max_length,
+            pad_to_multiple_of=self.pad_to_multiple_of,
+            return_tensors=self.return_tensors,
+        )
+        if "label" in batch:
+            batch["labels"] = batch["label"]
+            del batch["label"]
+        if "label_ids" in batch:
+            batch["labels"] = batch["label_ids"]
+            del batch["label_ids"]
 
+        # Collate Image
+        pixel_values = torch.stack([example["pixel_values"] for example in examples])
+        patch_attention_mask = torch.stack([example["patch_attention_mask"] for example in examples])
+        if "label" in examples[0]:
+            if self.is_regression:
+                labels = torch.FloatTensor([example["label"] for example in examples])
+            else:
+                labels = torch.LongTensor([example["label"] for example in examples])
+            return {**batch, "pixel_values": pixel_values, "patch_attention_mask": patch_attention_mask, "labels": labels}
+        return {**batch, "pixel_values": pixel_values, "patch_attention_mask": patch_attention_mask}
+               
 
 def get_collator(
     training_args: argparse.Namespace,
-    processor: Union[Union[PyGameTextRenderer, PangoCairoTextRenderer], PreTrainedTokenizerFast],
+    processor: Union[Union[PyGameTextRenderer, PangoCairoTextRenderer], PreTrainedTokenizerFast, Dict],
     modality: Modality,
     is_regression: bool = False
 ):
@@ -374,43 +438,16 @@ def get_collator(
         collator = image_collate_fn
     elif modality == Modality.TEXT:
         collator = DataCollatorWithPadding(processor, pad_to_multiple_of=8) if training_args.fp16 else None
+    elif modality == Modality.IMAGE_TEXT:
+        collator = ImageTextCollator(tokenizer=processor['text'], is_regression=is_regression)
     else:
         raise ValueError(f"Modality {modality} not supported.")
 
     return collator
-        
-def image_preprocess_fn(
-        example,
-        data_args: argparse.Namespace,
-        processor: Union[Union[PyGameTextRenderer, PangoCairoTextRenderer], PreTrainedTokenizerFast],
-        sentence_keys: Tuple[str, Optional[str]],
-        ):
-    sentence1_key, sentence2_key = sentence_keys
-    transforms = get_transforms(
-            do_resize=True,
-            size=(processor.pixels_per_patch, processor.pixels_per_patch * processor.max_seq_length),
-        )
-    format_fn = glue_strip_spaces
-    if sentence2_key:
-        # encodings = [
-        #     processor(text=(format_fn(a), format_fn(b)))
-        #     for a, b in zip(examples[sentence1_key], examples[sentence2_key])
-        # ]
-        encoding = processor(text=(format_fn(example[sentence1_key]), format_fn(example[sentence2_key])))
-    else:
-        # encodings = [processor(text=format_fn(a)) for a in examples[sentence1_key]]
-        encoding = processor(text=(format_fn(example[sentence1_key])))
-
-    # examples["pixel_values"] = [transforms(Image.fromarray(e.pixel_values)) for e in encodings]
-    example["pixel_values"] = transforms(Image.fromarray(encoding.pixel_values))
-    
-    example["attention_mask"] = get_attention_mask(encoding.num_text_patches, seq_length=data_args.max_seq_length)
-
-    return example
 
 def get_preprocess_fn(
     data_args: argparse.Namespace,
-    processor: Union[Union[PyGameTextRenderer, PangoCairoTextRenderer], PreTrainedTokenizerFast],
+    processor: Union[Union[PyGameTextRenderer, PangoCairoTextRenderer], PreTrainedTokenizerFast, Dict],
     modality: Modality,
     sentence_keys: Tuple[str, Optional[str]],
 ):
@@ -451,6 +488,41 @@ def get_preprocess_fn(
             return result
 
         preprocess_fn = text_preprocess_fn
+    elif modality == Modality.IMAGE_TEXT:
+        assert isinstance(processor, dict), "Image-Text modality requires a dict of processors."
+        text_processor = processor['text']
+        img_processor = processor['image']
+
+        transforms = get_transforms(
+            do_resize=False,
+            do_crop=True,
+            size=(img_processor.pixels_per_patch, img_processor.pixels_per_patch * img_processor.max_seq_length),
+        )
+        
+        def image_text_preprocess_fn(examples):
+            # Tokenize the texts
+            args = (
+                (examples[sentence1_key],)
+                if sentence2_key is None
+                else (examples[sentence1_key], examples[sentence2_key])
+            )
+            result = text_processor(*args, padding=True, max_length=data_args.max_seq_length, truncation=True)
+
+            # if "label" in examples:
+            #     result["label"] = [l for l in examples["label"]]
+            examples["input_ids"] = result["input_ids"]
+            examples["attention_mask"] = result["attention_mask"]
+                
+            examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
+            examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
+
+            examples["patch_attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
+
+            examples.pop("image")
+
+            return examples
+        
+        preprocess_fn=image_text_preprocess_fn
     else:
         raise ValueError(f"Modality {modality} not supported.")
 
@@ -658,47 +730,15 @@ def main():
     if modality == Modality.IMAGE:
         if processor.max_seq_length != data_args.max_seq_length:
             processor.max_seq_length = data_args.max_seq_length
+    if modality == Modality.IMAGE_TEXT:
+        if processor['image'].max_seq_length != data_args.max_seq_length:
+            processor['image'].max_seq_length = data_args.max_seq_length
 
-        # resize_model_embeddings(model, processor.max_seq_length)
-    # ===================================================================================
 
     # ======== Preprocessing the datasets ========
     preprocess_fn = get_preprocess_fn(data_args, processor, modality, (sentence1_key, sentence2_key))
     # ============================================
 
-    # # ======== 图像预处理函数 =======================
-    # if modality == Modality.IMAGE:
-    #     image_height = processor.pixels_per_patch
-    #     image_width = processor.pixels_per_patch * processor.max_seq_length
-    #     image_mean, image_std = (None, None)
-    #     transforms = get_transforms(
-    #         do_resize=True,
-    #         size=(image_height, image_width),
-    #         do_normalize=False,
-    #         image_mean=image_mean,
-    #         image_std=image_std,
-    #     )       
-    #     def pixel_preprocess_function(examples):
-    #         """Preprocess a batch of images by applying transforms."""
-            
-    #         examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
-    #         examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
-    #         examples["attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
-
-    #         return examples
-    # elif modality == Modality.TEXT:
-    #     def text_preprocess_fn(examples):
-    #         # Tokenize the texts
-    #         args = (
-    #             (examples[sentence1_key],)
-    #             if sentence2_key is None
-    #             else (examples[sentence1_key], examples[sentence2_key])
-    #         )
-    #         result = processor(*args, padding=True, max_length=data_args.max_seq_length, truncation=True)
-
-    #         if "label" in examples:
-    #             result["label"] = [l for l in examples["label"]]
-    #         return examples
 
     if training_args.do_train:
         if "train" not in raw_datasets:
@@ -710,26 +750,7 @@ def main():
         #######################################################################
         if data_args.max_train_samples is not None:
             train_dataset = train_dataset.select(range(data_args.max_train_samples))
-        if modality == Modality.IMAGE:
-            train_dataset.features["pixel_values"] = datasets.Image()
         train_dataset.set_transform(preprocess_fn)
-        # if modality == Modality.IMAGE:
-        #     train_dataset = train_dataset.map(
-        #                 pixel_preprocess_function,
-        #                 batched=True,
-        #                 # num_proc=48,
-        #                 remove_columns="image",
-        #                 load_from_cache_file=False,
-        #                 desc="Running image preprocess on dataset",
-        #             )
-        # elif modality == Modality.TEXT:
-        #     train_dataset = train_dataset.map(
-        #                 text_preprocess_fn,
-        #                 batched=True,
-        #                 # num_proc=48,
-        #                 load_from_cache_file=False,
-        #                 desc="Running text preprocess on dataset",
-        #             )
 
     if training_args.do_eval:
         if "validation" not in raw_datasets and "validation_matched" not in raw_datasets:
@@ -737,33 +758,17 @@ def main():
         eval_dataset = raw_datasets["validation_matched" if data_args.task_name == "mnli" else "validation"]
         if data_args.max_eval_samples is not None:
             eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
-        if modality == Modality.IMAGE:
-            eval_dataset.features["pixel_values"] = datasets.Image()
         eval_examples = copy.deepcopy(eval_dataset)
         eval_dataset.set_transform(preprocess_fn)
-        # ======= Debug =============
-        # if modality == Modality.TEXT:
-        #     eval_dataset.set_transform(preprocess_fn)
-        # else:
-        #     eval_dataset = eval_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-        #     eval_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
-
+        
     if training_args.do_predict or data_args.task_name is not None or data_args.test_file is not None:
         if "test" not in raw_datasets and "test_matched" not in raw_datasets:
             raise ValueError("--do_predict requires a test dataset")
         predict_dataset = raw_datasets["test_matched" if data_args.task_name == "mnli" else "test"]
         if data_args.max_predict_samples is not None:
             predict_dataset = predict_dataset.select(range(data_args.max_predict_samples))
-        if modality == Modality.IMAGE:
-            predict_dataset.features["pixel_values"] = datasets.Image()
         predict_dataset.set_transform(preprocess_fn)
-        # ======= Debug =============
-        # if modality == Modality.TEXT:
-        #     predict_dataset.set_transform(preprocess_fn)
-        # else:
-        #     predict_dataset = predict_dataset.map(image_preprocess_fn, fn_kwargs={'data_args': data_args, 'processor': processor, 'sentence_keys': (sentence1_key, sentence2_key)})
-        #     predict_dataset.set_format("pt", columns=["pixel_values", "attention_mask"], output_all_columns=True)
-
+        
     # Log a few random samples from the training set:
     # if training_args.do_train:
     #     for index in random.sample(range(len(train_dataset)), 3):
@@ -803,7 +808,7 @@ def main():
         train_dataset=train_dataset if training_args.do_train else None,
         eval_dataset=eval_dataset if training_args.do_eval else None,
         compute_metrics=compute_metrics,
-        tokenizer=processor,
+        tokenizer=processor['image'] if modality == Modality.IMAGE_TEXT else processor,
         data_collator=get_collator(training_args, processor, modality, is_regression=is_regression),
         callbacks=[EarlyStoppingCallback(early_stopping_patience=training_args.early_stopping_patience)]
         if training_args.early_stopping
@@ -845,8 +850,6 @@ def main():
             mismatched_eval_dataset = raw_datasets["validation_mismatched"]
             mismatched_eval_examples = copy.deepcopy(mismatched_eval_dataset)
             eval_examples_l.append(mismatched_eval_examples)
-            if modality == Modality.IMAGE:
-                mismatched_eval_dataset.features["pixel_values"] = datasets.Image()
             mismatched_eval_dataset.set_transform(preprocess_fn)
             eval_datasets.append(mismatched_eval_dataset)
 
@@ -885,8 +888,6 @@ def main():
         if data_args.task_name == "mnli":
             tasks.append("mnli-mm")
             mismatched_test_dataset = raw_datasets["test_mismatched"]
-            if modality == Modality.IMAGE:
-                mismatched_test_dataset.features["pixel_values"] = datasets.Image()
             mismatched_test_dataset.set_transform(preprocess_fn)
             predict_datasets.append(mismatched_test_dataset)
 
