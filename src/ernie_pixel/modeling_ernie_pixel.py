@@ -1053,6 +1053,7 @@ class ErniePixelModel(ErniePixelPreTrainedModel):
         pixel_values: Optional[torch.Tensor] = None,
         num_patches: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
+        patch_attention_mask: Optional[torch.Tensor] = None, # add @liuqingyi
         position_ids: Optional[torch.LongTensor] = None,
         past_key_values: Optional[List[torch.FloatTensor]] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
@@ -1091,9 +1092,11 @@ class ErniePixelModel(ErniePixelPreTrainedModel):
         """ pixel """
         if pixel_values is not None and input_ids is None:
             # patch embeddings
-            inputs_embeds = self.embed_patches(pixel_values)
+            inputs_embeds = self.embed_patches(pixel_values) # pixel_values: [bs, 3, h, w]
             batch_size, seq_length = inputs_embeds.shape[:2]
         split_args = None
+
+        """ pixel-text """
         if pixel_values is not None and input_ids is not None:
             text_embeds = self.embed_tokens(input_ids)
             pixel_embeds = self.embed_patches(pixel_values)
@@ -1103,6 +1106,8 @@ class ErniePixelModel(ErniePixelPreTrainedModel):
             ]
             inputs_embeds = torch.cat([pixel_embeds, text_embeds], dim=1)
             batch_size, seq_length = inputs_embeds.shape[:2]
+            attention_mask = torch.cat([patch_attention_mask, attention_mask], dim=1)
+            
 
         # tobefix: support full training (I-T/T-I)
         # if len(task_list) == 2:
@@ -2434,6 +2439,7 @@ class ErniePixelForSequenceClassification(ErniePixelPreTrainedModel):
         # pixel input ################################################
         pixel_values: Optional[torch.FloatTensor] = None,
         num_patches: Optional[torch.Tensor] = None,
+        patch_attention_mask: Optional[torch.Tensor] = None,
         ##############################################################
     ) -> Union[Tuple, SequenceClassifierOutputWithPast]:
         r"""
@@ -2449,6 +2455,7 @@ class ErniePixelForSequenceClassification(ErniePixelPreTrainedModel):
             pixel_values=pixel_values,
             num_patches=num_patches,
             attention_mask=attention_mask,
+            patch_attention_mask=patch_attention_mask,
             position_ids=position_ids,
             past_key_values=past_key_values,
             inputs_embeds=inputs_embeds,
@@ -2472,8 +2479,13 @@ class ErniePixelForSequenceClassification(ErniePixelPreTrainedModel):
         if self.config.pad_token_id is None:
             sequence_lengths = -1
         else:
-            if input_ids is not None:
+            if input_ids is not None and pixel_values is None:
                 sequence_lengths = (torch.eq(input_ids, self.config.pad_token_id).int().argmax(-1) - 1).to(
+                    logits.device
+                )
+            elif input_ids is not None and pixel_values is not None:
+                patch_len = patch_attention_mask.shape[1]
+                sequence_lengths = (patch_len + torch.eq(input_ids, self.config.pad_token_id).int().argmax(-1) - 1).to(
                     logits.device
                 )
             else:
