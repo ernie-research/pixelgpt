@@ -6,17 +6,17 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # ======== 输入参数 ========
 step=51750
-RENDER_MODE='gray'
+RENDER_MODE="gray"
 # =========================
 
 
 MODEL=pretrained_models/ernie-pixel-only/checkpoint-${step}/
 CKPT_NAME=ckpt-${step}
-LOG_DIR=log/ft_ernie-pixel-only/$CKPT_NAME
+LOG_DIR=log/render_mode/nlu_glue/$RENDER_MODE/ernie-pixel-only/$CKPT_NAME
+mkdir -p $LOG_DIR
 
 mkdir -p $LOG_DIR
 
-# for TASK in mnli qqp qnli sst2 cola mrpc stsb rte wnli
 for TASK in mnli qqp qnli sst2 cola mrpc stsb rte wnli
 do
     echo "running ${TASK}..."
