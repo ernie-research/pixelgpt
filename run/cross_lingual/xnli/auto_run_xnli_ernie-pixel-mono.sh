@@ -4,6 +4,9 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
+echo "sleeping..."
+sleep 1800
+
 # ==== 设置ckpt step ====
 step=12500 # 指定你的ckpt步数
 PT_TYPE=ernie-pixel-mono # 指定你的预训练类型

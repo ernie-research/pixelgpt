@@ -114,7 +114,7 @@ class ViTPatchEmbeddings(nn.Module):
         self.image_size = image_size
         self.patch_size = patch_size
         self.num_patches = num_patches
-        self.projection = nn.Conv2d(num_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.projection = nn.Conv2d(num_channels, embed_dim, kernel_size=patch_size, stride=patch_size) # 复制weight和bias
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, pixel_values):

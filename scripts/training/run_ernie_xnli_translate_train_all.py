@@ -157,6 +157,9 @@ class DataTrainingArguments:
     load_from_file: bool = field(
         default=False, metadata={"help": "Load dataset from file or not."}
     )
+    render_mode: str = field(
+        default="rgb", metadata={"help": "Render mode for the dataset. Options are 'rgb' or 'gray' or 'binary'."}
+    )
 
 
 
@@ -402,7 +405,15 @@ def get_preprocess_fn(
 
         
         def image_preprocess_fn(examples):
-            examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))) for image in examples["image"]]
+            if data_args.render_mode == 'rgb':
+                examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))).convert('RGB') for image in examples["image"]]
+            elif data_args.render_mode == 'gray':
+                examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))).convert('L') for image in examples["image"]]
+            elif data_args.render_mode == 'binary':
+                threshold_value = 127
+                examples["pixel_values"] = [Image.open(io.BytesIO(b64decode(image))).convert('L').point(lambda x: 255 if x > threshold_value else 0, '1') for image in examples["image"]]
+            
+            
             examples["pixel_values"] = [transforms(image) for image in examples["pixel_values"]]
             examples["attention_mask"] = [get_attention_mask(num_patches, seq_length=data_args.max_seq_length) for num_patches in examples["num_patches"]]
 
@@ -595,13 +606,6 @@ def main():
     # Load pretrained model and config
     model, config = get_model_and_config(model_args, num_labels, data_args.task_name)
 
-    # ========== 打印模型参数量 ==============
-    def get_parameter_number(model):
-        total_num = sum(p.numel() for p in model.parameters())
-        trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        return {'Total': total_num, 'Trainable': trainable_num}
-    print(get_parameter_number(model))
-
 
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
@@ -660,6 +664,40 @@ def main():
             modality = Modality.IMAGE
         else:
             raise ValueError(f"modality {model_args.modality} not supported")
+        
+    # ========== 如果模型为`pixel-based`且输入为单通道，则按通道平均 patch embedding 的权重 ==========
+    if modality in [Modality.IMAGE] and data_args.render_mode in ['gray', 'binary']:
+        """Average the projection weight for channels=3 into a single channel projection."""
+        from torch import nn
+      
+        # 获取卷积核权重，其形状为 [out_channels, in_channels, height, width]
+        projection = model.model.embed_patches.patch_embeddings.projection
+        original_weights = projection.weight.data
+
+        # 计算新的单通道卷积核权重, 对每个输出通道的卷积核，将其三个输入通道的参数求平均
+        new_weights = original_weights.mean(dim=1, keepdim=True)  # 沿着输入通道维度进行平均
+
+        # 创建新的卷积层，其输入通道数为1，将计算出的平均新权重赋值给新卷积层
+        out_channels, kernel_size, stride = projection.out_channels, projection.kernel_size, projection.stride
+        new_conv = nn.Conv2d(1, out_channels, kernel_size=kernel_size, stride=stride)
+        new_conv.weight.data = new_weights
+
+        # 如果有偏置项，也要复制过来
+        if projection.bias is not None:
+            new_conv.bias.data = projection.bias.data
+        
+        model.model.embed_patches.patch_embeddings.projection = new_conv
+        
+        # 更新`num_channels`参数
+        model.model.embed_patches.patch_embeddings.num_channels = 1
+        model.config.num_channels = 1
+
+    # ========== 打印模型参数量 ==============
+    def get_parameter_number(model):
+        total_num = sum(p.numel() for p in model.parameters())
+        trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        return {'Total': total_num, 'Trainable': trainable_num}
+    print(get_parameter_number(model))
         
     processor = get_processor(model_args, modality)
 

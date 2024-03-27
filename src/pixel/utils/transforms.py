@@ -208,7 +208,8 @@ def get_transforms(
     """
 
     # Convert to RGB
-    transforms = [Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img)]
+    # transforms = [Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img)]
+    transforms = []
 
     # Optionally, resize to specified size
     if do_resize and size:
