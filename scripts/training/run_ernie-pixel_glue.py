@@ -421,7 +421,8 @@ def get_preprocess_fn(
 
     if modality == Modality.IMAGE:
         transforms = get_transforms(
-            do_resize=True,
+            do_resize=False,
+            do_crop=True,
             size=(processor.pixels_per_patch, processor.pixels_per_patch * processor.max_seq_length),
         )
 
@@ -752,6 +753,7 @@ def main():
         if modality == Modality.IMAGE:
             train_dataset.features["pixel_values"] = datasets.Image()
         train_dataset.set_transform(preprocess_fn)
+
         # if modality == Modality.IMAGE:
         #     train_dataset = train_dataset.map(
         #                 pixel_preprocess_function,
