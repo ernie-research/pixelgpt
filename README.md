@@ -4,7 +4,7 @@ Harnessing visual texts represents a burgeoning frontier in the evolution of lan
 To run the code, you should install the dependency libraries.
 # Fine-tuning Data
 We fine-tune pixelgpt on GLEU and XNLI datasets. The rendered version of these experimental datasets is released at [huggingface](https://huggingface.co/datasets/baidu/PixelGPT_sft).
-# Traing and Evaluation
+# Fine-tuning
 ## GLEU 
 We Take the MNLI dataset as an example.
 ### ernie-clm-base
