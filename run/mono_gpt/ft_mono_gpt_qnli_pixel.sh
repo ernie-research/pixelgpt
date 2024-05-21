@@ -4,6 +4,8 @@ set -e
 
 export PYTHONPATH=$PYTHONPATH:src/
 
+# export CUDA_VISIBLE_DEVICES=4,5,6,7
+
 # Note on GLUE: 
 # We found that for some of the tasks (e.g. MNLI), PIXEL can get stuck in a bad local optimum
 # A clear indicator of this is when the training loss is not decreasing substantially within the first 1k-3k steps
@@ -16,12 +18,12 @@ export PYTHONPATH=$PYTHONPATH:src/
 NUM_NODE=8
 MASTER_POART=23453
 
-MODALITY="image-text"
+MODALITY="image"
 
 TASK="qnli"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-SEQ_LEN=512
+SEQ_LEN=768
 BSZ=8
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
@@ -40,18 +42,24 @@ GREATER_IS_BETTER=True
 
 
 
-for LR in 1e-5 3e-5 5e-5 1e-4
+
+
+# === DEBUG ===
+# RUN_NAME=test_preprocess-on-the-fly
+# =============
+
+for LR in 1e-5
 do
-    for GRAD_ACCUM in 1 2 4 8
+    for GRAD_ACCUM in 4
     do
         for MAX_STEPS in 8000
             do
                 RUN_NAME="ernie-pixel-mono/$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 
-                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue_pair.py \
+                python -m torch.distributed.launch --nproc_per_node=${NUM_NODE} --master_port=${MASTER_POART} scripts/training/run_ernie-pixel_glue.py \
                 --model_name_or_path=${MODEL} \
                 --model_type=ernie-pixel \
-                --processor_name="${MODEL},renderers/noto_renderer" \
+                --processor_name=renderers/noto_renderer \
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \

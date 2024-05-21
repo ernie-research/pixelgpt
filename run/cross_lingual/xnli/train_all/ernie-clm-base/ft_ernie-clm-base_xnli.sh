@@ -48,7 +48,7 @@ for LR in 5e-5
 do
     for GRAD_ACCUM in 1
     do
-        for MAX_STEPS in 15000
+        for MAX_STEPS in 30000
             do  
                 RUN_NAME="experiment/cross_lingual/xnli/train_all/ernie-clm-base/${TASK}-$(basename ${MODEL})/${TASK}-$(basename ${MODEL})-${RENDERING_BACKEND}-${MODALITY}-${SEQ_LEN}-${BSZ}-${GRAD_ACCUM}-${NUM_NODE}-${LR}-${MAX_STEPS}-${SEED}"
 

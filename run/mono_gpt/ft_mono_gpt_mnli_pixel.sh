@@ -16,11 +16,11 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # =====================Settings========================
 NUM_NODE=8
-MASTER_POART=23454
+MASTER_POART=23451
 
 MODALITY="image"
 
-TASK="qqp"
+TASK="mnli"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -36,18 +36,21 @@ SAVE_STEPS=500
 
 # early stopping
 IS_EARLY_STOPPING=True
-METRIC_FOR_BEST_MODEL="eval_f1"
+METRIC_FOR_BEST_MODEL="eval_accuracy"
 EARLY_STOPPING_PATIENCE=8
 GREATER_IS_BETTER=True
+
+
+
 
 
 # === DEBUG ===
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 3e-5
+for LR in 5e-5
 do
-    for GRAD_ACCUM in 4
+    for GRAD_ACCUM in 1
     do
         for MAX_STEPS in 15000
             do
@@ -60,9 +63,11 @@ do
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
-                --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-train/part-00000.gz \
-                --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-validation/part-00000.gz \
-                --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-test/part-00000.gz \
+                --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-train/part-00000.gz \
+                --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-validation_mismatched/part-00000.gz \
+                --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-test_mismatched/part-00000.gz \
+                --validation_matched_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-validation_matched/part-00000.gz \
+                --test_matched_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/mnli-test_matched/part-00000.gz \
                 --rendering_backend=${RENDERING_BACKEND} \
                 --remove_unused_columns=False \
                 --max_steps=${MAX_STEPS} \
@@ -93,7 +98,6 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --bf16 \
                 --seed=${SEED}
             done
     done

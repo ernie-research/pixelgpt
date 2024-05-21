@@ -95,7 +95,7 @@ do
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
                 --seed=${SEED} \
-                --bf16
+                --fp16
             done
     done
 done

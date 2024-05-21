@@ -16,11 +16,11 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # =====================Settings========================
 NUM_NODE=8
-MASTER_POART=23453
+MASTER_POART=23456
 
 MODALITY="image"
 
-TASK="qnli"
+TASK="sst2"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=768
@@ -48,7 +48,7 @@ GREATER_IS_BETTER=True
 # RUN_NAME=test_preprocess-on-the-fly
 # =============
 
-for LR in 1e-5
+for LR in 5e-5
 do
     for GRAD_ACCUM in 4
     do
@@ -96,7 +96,6 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --bf16 \
                 --seed=${SEED}
             done
     done

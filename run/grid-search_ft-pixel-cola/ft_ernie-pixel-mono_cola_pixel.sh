@@ -22,7 +22,7 @@ MODALITY="image"
 TASK="cola"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
-SEQ_LEN=768
+SEQ_LEN=64
 BSZ=4
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
@@ -41,6 +41,8 @@ GREATER_IS_BETTER=True
 
 LR_SCHEDULER="cosine"
 DROPOUT_PROB=0.1
+
+DATA_DIR=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/cola_64/
 
 
 # === DEBUG ===
@@ -65,9 +67,9 @@ do
                 --modality=${MODALITY} \
                 --task_name=${TASK} \
                 --load_from_file=True \
-                --train_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-train/part-00000.gz \
-                --validation_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-validation/part-00000.gz \
-                --test_file=/root/paddlejob/workspace/env_run/liuqingyi01/pixel_data/${TASK}-test/part-00000.gz \
+                --train_file=${DATA_DIR}/${TASK}-train/part-00000.gz \
+                --validation_file=${DATA_DIR}/${TASK}-validation/part-00000.gz \
+                --test_file=${DATA_DIR}/${TASK}-test/part-00000.gz \
                 --rendering_backend=${RENDERING_BACKEND} \
                 --remove_unused_columns=False \
                 --max_steps=${MAX_STEPS} \
@@ -98,7 +100,6 @@ do
                 --early_stopping_patience=${EARLY_STOPPING_PATIENCE} \
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
-                --fp16 \
                 --seed=${SEED}
             done
     done

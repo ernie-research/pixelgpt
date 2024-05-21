@@ -22,7 +22,7 @@ TASK="xnli"
 MODEL=$1 # also works with "bert-base-cased", "roberta-base", etc.
 RENDERING_BACKEND="pygame"  # Consider trying out both "pygame" and "pangocairo" to see which one works best
 SEQ_LEN=256
-BSZ=8
+BSZ=16
 GRAD_ACCUM=None  # We found that higher batch sizes can sometimes make training more stable
 LR=None
 SEED=42
@@ -49,7 +49,7 @@ RENDER_MODE=$2
 
 for LR in 7e-6 1e-5 3e-5 5e-5 1e-4
 do
-    for GRAD_ACCUM in 8
+    for GRAD_ACCUM in 4
     do
         for MAX_STEPS in 30000
             do  
@@ -95,7 +95,7 @@ do
                 --greater_is_better=${GREATER_IS_BETTER} \
                 --load_best_model_at_end=True \
                 --seed=${SEED} \
-                --bf16
+                --fp16
             done
     done
 done
