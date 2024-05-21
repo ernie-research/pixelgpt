@@ -8,9 +8,12 @@ bash run_requirements.sh
 ```
 # Fine-tuning Data
 We fine-tune pixelgpt on GLEU and XNLI datasets. The rendered version of these experimental datasets is released at [huggingface](https://huggingface.co/datasets/baidu/PixelGPT_sft).
+# Models
+We pre-trained PixelGPT and three other models: TextGPT, MonoGPT, and DualGPT. We release checkpoints used in our experiment and they can be downloaded at [Model](https://huggingface.co/baidu/PixelGPT).
 # Fine-tuning
+Our main fine-tuning experiments were performed on GLUE and XNLI. The scripts to run the experiments are given below. Note that before running the scripts, you should download the corresponding pre-trained models from our open-source model repository and place the model file in the pre-trained model directory, e.g. `pretrained_models/pixel_gpt`.
 ## GLEU 
-We Take the MNLI dataset as an example.
+Unless otherwise specified, we take the MNLI dataset as an example.
 ### TextGPT
 ```
 bash run/text_gpt/ft_text_gpt_mnli.sh 
