@@ -12,7 +12,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 for step in 61000 25000 12500 10000 5000 2500
 do
-PT_TYPE=ernie-clm-base # 指定你的预训练类型
+PT_TYPE=text_gpt # 指定你的预训练类型
 
 
 # pretrained model path

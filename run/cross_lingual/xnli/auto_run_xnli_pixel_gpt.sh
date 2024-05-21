@@ -6,7 +6,7 @@ export PYTHONPATH=$PYTHONPATH:src/
 
 # ==== 设置ckpt step ====
 step=12500 # 指定你的ckpt步数
-PT_TYPE=ernie-pixel-only # 指定你的预训练类型
+PT_TYPE=pixel_gpt # 指定你的预训练类型
 # =======================
 
 
