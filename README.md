@@ -10,7 +10,7 @@ We fine-tune pixelgpt on GLEU and XNLI datasets. The rendered version of the
 # Fine-tuning
 ## GLEU 
 We Take the MNLI dataset as an example.
-### ernie-clm-base
+### TextGPT
 ```
 bash run/ernie-clm-base/ft_ernie-clm-base_mnli.sh 
     --NUM_NODE=8
