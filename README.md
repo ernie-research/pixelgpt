@@ -7,7 +7,7 @@ To run the code, you should install the dependency libraries.
 bash run_requirements.sh
 ```
 # Fine-tuning Data
-We fine-tune pixelgpt on GLEU and XNLI datasets. The rendered version of these experimental datasets is released at [baidu/rendered_GLUE](https://huggingface.co/datasets/baidu/rendered_GLUE) and [baidu/rendered_xnli](https://huggingface.co/datasets/baidu/PixelGPT_sft](https://huggingface.co/datasets/baidu/rendered_xnli/tree/main](https://huggingface.co/datasets/baidu/rendered_xnli).
+We fine-tune pixelgpt on GLEU and XNLI datasets. The rendered version of these experimental datasets is released at [baidu/rendered_GLUE](https://huggingface.co/datasets/baidu/rendered_GLUE) and [baidu/rendered_xnli](https://huggingface.co/datasets/baidu/rendered_xnli).
 # Pre-trained Models
 We pre-trained PixelGPT and three other models: MonoGPT, and DualGPT. We release checkpoints used in our experiment, which can be downloaded at [baidu/PixelGPT](https://huggingface.co/baidu/PixelGPT), [baidu/MonoGPT](https://huggingface.co/baidu/MonoGPT), and [baidu/DualGPT](https://huggingface.co/baidu/DualGPT).
 # Fine-tuning
