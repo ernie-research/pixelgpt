@@ -52,69 +52,65 @@ we fine-tuned pixelgpt on XNLI with two settings: `Translate-train-all` and `Cro
 ### Translate-train-all
 #### PixelGPT
 ```
-bash run/cross_lingual/xnli/train_all/pixel_gpt/ft_pixel_gpt_xnli.sh
+bash run/cross_lingual/xnli/train_all/pixel_gpt/ft_pixel_gpt_xnli.sh pretrained_models/PixelGPT
 ```
 #### MonoGPT
 - text-only
 ```
-bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_text.sh
+bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_text.sh pretrained_models/MonoGPT
 ```
 - pixel-only
 ```
-bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_image.sh
+bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_image.sh pretrained_models/MonoGPT
 ```
 - pair
 ```
-bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_pair.sh
+bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_pair.sh pretrained_models/MonoGPT
 ```
 #### DualGPT
 - text-only
 ```
-bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_text.sh
+bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_text.sh pretrained_models/DualGPT
 ```
 - pixel-only
 ```
-bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_image.sh
+bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_image.sh pretrained_models/DualGPT
 ```
 - pair
 ```
-bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_pair.sh
+bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_pair.sh pretrained_models/DualGPT
 ```
 
 ### Cross-lingaul Transfer
-#### TextGPT
-```
-bash run/cross_lingual/xnli/train_en/text_gpt/ft_text_gpt_xnli.sh
-```
 #### PixelGPT
 ```
-bash run/cross_lingual/xnli/train_en/pixel_gpt/ft_pixel_gpt_xnli.sh
+bash run/cross_lingual/xnli/train_en/pixel_gpt/ft_pixel_gpt_xnli.sh pretrained_models/PixelGPT
 ```
 #### MonoGPT
 - text-only
 ```
-bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_text.sh
+bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_text.sh pretrained_models/MonoGPT
 ```
 - pixel-only
 ```
-bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_image.sh
+bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_image.sh pretrained_models/MonoGPT
 ```
 - pair
 ```
-bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_pair.sh
+bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_pair.sh pretrained_models/MonoGPT
 ```
 #### DualGPT
 - text-only
 ```
-bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_text.sh
+bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_text.sh pretrained_models/DualGPT
 ```
 - pixel-only
 ```
-bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_image.sh
+bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_image.sh pretrained_models/DualGPT
 ```
 - pair
 ```
-bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_pair.sh
+bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_pair.sh pretrained_models/DualGPT
 ```
 # Citation
 For attribution in academic contexts, please cite this work as:
