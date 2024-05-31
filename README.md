@@ -7,11 +7,11 @@ To run the code, you should install the dependency libraries.
 bash run_requirements.sh
 ```
 # Fine-tuning Data
-We fine-tune pixelgpt on GLEU and XNLI datasets. The rendered version of these experimental datasets is released at [baidu/rendered_GLUE](https://huggingface.co/datasets/baidu/rendered_GLUE) and [baidu/rendered_xnli](https://huggingface.co/datasets/baidu/rendered_xnli).
+We mainly fine-tune pixelgpt on rendered GLEU and XNLI datasets. The rendered version of these experimental datasets is released at [baidu/rendered_GLUE](https://huggingface.co/datasets/baidu/rendered_GLUE) and [baidu/rendered_xnli](https://huggingface.co/datasets/baidu/rendered_xnli).
 # Pre-trained Models
 We pre-trained PixelGPT and three other models: MonoGPT, and DualGPT. We release checkpoints used in our experiment, which can be downloaded at [baidu/PixelGPT](https://huggingface.co/baidu/PixelGPT), [baidu/MonoGPT](https://huggingface.co/baidu/MonoGPT), and [baidu/DualGPT](https://huggingface.co/baidu/DualGPT).
 # Fine-tuning
-Our main fine-tuning experiments were performed on GLUE and XNLI. The scripts to run the experiments are given below. Before running the scripts, download the corresponding pre-trained models from our open-source model repository and place the file in the pre-trained model directory, e.g. `pretrained_models/pixel_gpt`.
+Our main fine-tuning experiments were performed on rendered GLUE and XNLI. The scripts to run the experiments are given below. Before running the scripts, download the corresponding pre-trained models from our open-source model repository above and place the file in the pre-trained model directory, e.g. `pretrained_models/pixel_gpt`.
 ## GLEU 
 Unless otherwise specified, we take the MNLI dataset as an example.
 ### PixelGPT
@@ -48,7 +48,7 @@ run/dual_gpt/ft_dual_gpt_mnli_pair.sh pretrained_models/DualGPT
 
 
 ## XNLI
-we fine-tuned pixelgpt on XNLI with two settings: `Translate-train-all` and `Cross-lingual transfer`.
+our evaluation of rendered XNLI is performed in two distinct scenarios: (1) \textit{Translate-train-all}, where the model is fine-tuned on a blend of original English and machine-translated data from other 14 languages, aiming to appraise the model's multilingual understanding; (2) \textit{Cross-lingual Transfer} settings, wherein fine-tuning is conducted solely on English data, with multi-language test sets employed to evaluate the model’s transferability across languages.  
 ### Translate-train-all
 #### PixelGPT
 ```
