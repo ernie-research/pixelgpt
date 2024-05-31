@@ -14,50 +14,42 @@ We pre-trained PixelGPT and three other models: MonoGPT, and DualGPT. We release
 Our main fine-tuning experiments were performed on GLUE and XNLI. The scripts to run the experiments are given below. Before running the scripts, download the corresponding pre-trained models from our open-source model repository and place the file in the pre-trained model directory, e.g. `pretrained_models/pixel_gpt`.
 ## GLEU 
 Unless otherwise specified, we take the MNLI dataset as an example.
-### TextGPT
-```
-bash run/text_gpt/ft_text_gpt_mnli.sh 
-```
 ### PixelGPT
 ```
-bash run/pixel_gpt/ft_pixel_gpt_mnli.sh
+bash run/pixel_gpt/ft_pixel_gpt_mnli.sh pretrained_models/PixelGPT
 ```
 ### MonoGPT
 - text only
 ```
-run/mono_gpt/ft_mono_gpt_mnli_text.sh
+run/mono_gpt/ft_mono_gpt_mnli_text.sh pretrained_models/MonoGPT
 ```
 - pixel only
 ```
-run/mono_gpt/ft_mono_gpt_mnli_pixel.sh
+run/mono_gpt/ft_mono_gpt_mnli_pixel.sh pretrained_models/MonoGPT
 ```
 - pair
 ```
-run/mono_gpt/ft_mono_gpt_mnli_pair.sh
+run/mono_gpt/ft_mono_gpt_mnli_pair.sh pretrained_models/MonoGPT
 ```
 
 ### DualGPT
 - text only
 ```
-run/dual_gpt/ft_dual_gpt_mnli_text.sh
+run/dual_gpt/ft_dual_gpt_mnli_text.sh pretrained_models/DualGPT
 ```
 - pixel only
 ```
-run/dual_gpt/ft_dual_gpt_mnli_pixel.sh
+run/dual_gpt/ft_dual_gpt_mnli_pixel.sh pretrained_models/DualGPT
 ```
 - pair
 ```
-run/dual_gpt/ft_dual_gpt_mnli_pair.sh
+run/dual_gpt/ft_dual_gpt_mnli_pair.sh pretrained_models/DualGPT
 ```
 
 
 ## XNLI
 we fine-tuned pixelgpt on XNLI with two settings: `Translate-train-all` and `Cross-lingual transfer`.
 ### Translate-train-all
-#### TextGPT
-```
-bash run/cross_lingual/xnli/train_all/text_gpt/ft_text_gpt_xnli.sh
-```
 #### PixelGPT
 ```
 bash run/cross_lingual/xnli/train_all/pixel_gpt/ft_pixel_gpt_xnli.sh
