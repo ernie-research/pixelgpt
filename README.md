@@ -19,30 +19,27 @@ Unless otherwise specified, we take the MNLI dataset as an example.
 bash run/pixel_gpt/ft_pixel_gpt_mnli.sh pretrained_models/PixelGPT
 ```
 ### MonoGPT
-- text-only fine-tuning
 ```
+# Text-only Fine-tuning
 run/mono_gpt/ft_mono_gpt_mnli_text.sh pretrained_models/MonoGPT
-```
-- pixel-only fine-tuning
-```
+
+# Pixel-only Fine-tuning
 run/mono_gpt/ft_mono_gpt_mnli_pixel.sh pretrained_models/MonoGPT
-```
-- pair-modality fine-tuning
-```
+
+# Pair-modality Fine-tuning
 run/mono_gpt/ft_mono_gpt_mnli_pair.sh pretrained_models/MonoGPT
 ```
 
 ### DualGPT
-- text-only fine-tuning
 ```
+# Text-only Fine-tuning
 run/dual_gpt/ft_dual_gpt_mnli_text.sh pretrained_models/DualGPT
-```
-- pixel-only fine-tuning
-```
+
+# Pixel-only Fine-tuning
 run/dual_gpt/ft_dual_gpt_mnli_pixel.sh pretrained_models/DualGPT
-```
-- pair-modality fine-tuning
-```
+
+
+# Pair-modality Fine-tuning
 run/dual_gpt/ft_dual_gpt_mnli_pair.sh pretrained_models/DualGPT
 ```
 
@@ -55,29 +52,25 @@ our evaluation of rendered XNLI is performed in two distinct scenarios: (1) _Tra
 bash run/cross_lingual/xnli/train_all/pixel_gpt/ft_pixel_gpt_xnli.sh pretrained_models/PixelGPT
 ```
 #### MonoGPT
-- text-only fine-tuning
 ```
+# Text-only Fine-tuning
 bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_text.sh pretrained_models/MonoGPT
-```
-- pixel-only fine-tuning
-```
+
+# Pixel-only Fine-tuning
 bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_image.sh pretrained_models/MonoGPT
-```
-- pair-modality fine-tuning
-```
+
+# Pair-modality Fine-tuning
 bash run/cross_lingual/xnli/train_all/mono_gpt/ft_mono_gpt_xnli_pair.sh pretrained_models/MonoGPT
 ```
 #### DualGPT
-- text-only fine-tuning
 ```
+# Text-only Fine-tuning
 bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_text.sh pretrained_models/DualGPT
-```
-- pixel-only fine-tuning
-```
+
+# Pixel-only Fine-tuning
 bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_image.sh pretrained_models/DualGPT
-```
-- pair-modality fine-tuning
-```
+
+# Pair-modality Fine-tuning
 bash run/cross_lingual/xnli/train_all/dual_gpt/ft_dual_gpt_xnli_pair.sh pretrained_models/DualGPT
 ```
 
@@ -98,16 +91,14 @@ bash run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_image.sh pretrain
 run/cross_lingual/xnli/train_en/mono_gpt/ft_mono_gpt_xnli_pair.sh pretrained_models/MonoGPT
 ```
 #### DualGPT
-- text-only
 ```
+# Text-only Fine-tuning
 bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_text.sh pretrained_models/DualGPT
-```
-- pixel-only
-```
+
+# Pixel-only Fine-tuning
 bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_image.sh pretrained_models/DualGPT
-```
-- pair
-```
+
+# Pair-modality Fine-tuning
 bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_pair.sh pretrained_models/DualGPT
 ```
 # Citation
