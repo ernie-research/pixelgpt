@@ -7,7 +7,7 @@ To run the code, you should install the dependency libraries.
 bash run_requirements.sh
 ```
 # Fine-tuning Data
-We mainly fine-tune pixelgpt on rendered GLUE and XNLI datasets. The rendered version of these experimental datasets is released at [baidu/rendered_GLUE](https://huggingface.co/datasets/baidu/rendered_GLUE) and [baidu/rendered_xnli](https://huggingface.co/datasets/baidu/rendered_xnli). "Before fine-tuning, you should download the required dataset from HuggingFace, save it locally, and then extract it:
+We mainly fine-tune pixelgpt on rendered GLUE and XNLI datasets. The rendered version of these experimental datasets is released at [baidu/rendered_GLUE](https://huggingface.co/datasets/baidu/rendered_GLUE) and [baidu/rendered_xnli](https://huggingface.co/datasets/baidu/rendered_xnli). Before fine-tuning, you should download the required dataset from HuggingFace, save it locally, and then extract it:
 ```
 # Extract rendered GLUE
 tar -xvf rendered_glue.tar
@@ -16,7 +16,7 @@ tar -xvf rendered_glue.tar
 tar -xvf rendered_xnli.tar
 ```
 For the rendered GLUE dataset, the extracted files contain multiple tasks. Each task has a corresponding training set, validation set, and test set. Note that for the MNLI task, both the validation and test sets contain matched and mismatched versions. You will need to assign the local paths of these task datasets to the `--train_file`, `--validation_file`, and `--test_file` parameters in the fine-tuning script.
-For the rendered XNLI dataset, assign the local dataset path to the `--data_file_dir` parameter in the corresponding fine-tuning script."
+For the rendered XNLI dataset, assign the local dataset path to the `--data_file_dir` parameter in the corresponding fine-tuning script.
 # Pre-trained Models
 We pre-trained PixelGPT and three other models: MonoGPT, and DualGPT. We release checkpoints used in our experiment, which can be downloaded at [baidu/PixelGPT](https://huggingface.co/baidu/PixelGPT), [baidu/MonoGPT](https://huggingface.co/baidu/MonoGPT), and [baidu/DualGPT](https://huggingface.co/baidu/DualGPT). Before running the fine-tuning scripts bellow, download the corresponding pre-trained models from our open-source model repository above and place the file in the pre-trained model directory, e.g. `pretrained_models/pixel_gpt`.
 # Fine-tuning
