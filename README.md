@@ -17,8 +17,8 @@ The official repository which contains the code and model checkpoints for our pa
 
 
 ## 🔥 News
-* **1 October, 2024:** 🎉 We release the official codebase and model weights of [`PixelGPT`](https://huggingface.co/baidu/PixelGPT), [`MonoGPT`](https://huggingface.co/baidu/MonoGPT), and [`DualGPT`](https://huggingface.co/baidu/DualGPT) . Stay tuned!🔥
 * **21 September, 2024:** 🎉 Our work has been accepted to [EMNLP 2024](https://2024.emnlp.org/)! 🎉
+* **1 May, 2024:** 🎉 We release the official codebase and model weights of [`PixelGPT`](https://huggingface.co/baidu/PixelGPT), [`MonoGPT`](https://huggingface.co/baidu/MonoGPT), and [`DualGPT`](https://huggingface.co/baidu/DualGPT) . Stay tuned!🔥
   
 <img width="634" alt="image" src="https://github.com/ernie-research/pixelgpt/assets/13767887/1827f43f-34ca-448e-80ca-1fd0a523f213">
 
