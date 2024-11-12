@@ -1,4 +1,4 @@
-# [EMNLP'24 | Autoregressive Pre-Training on Pixels and Texts](https://arxiv.org/abs/2404.10710)
+# [EMNLP'24 | Autoregressive Pre-Training on Pixels and Texts](https://aclanthology.org/2024.emnlp-main.182/)
 
    <a href="https://huggingface.co/baidu" target="_blank">
       <img alt="Models" src="https://img.shields.io/badge/🤗-Models-blue" />
@@ -9,11 +9,11 @@
    <a href="https://huggingface.co/datasets/baidu/rendered_xnli" target="_blank">
       <img alt="Datasets" src="https://img.shields.io/badge/📚-Data(rendered XNLI)-orange" />
    </a> 
-   <a href="https://arxiv.org/abs/2404.10710" target="_blank"><img alt="Paper" src="https://img.shields.io/badge/📜-Paper-purple" /></a>
+   <a href="https://aclanthology.org/2024.emnlp-main.182/" target="_blank"><img alt="Paper" src="https://img.shields.io/badge/📜-Paper-purple" /></a>
   <a href="https://2024.emnlp.org/" target="_blank"> <img alt="EMNLP 2024" src="https://img.shields.io/badge/Proceedings-EMNLP2024-red" /> </a>
 
 
-The official repository which contains the code and model checkpoints for our paper [Autoregressive Pre-Training on Pixels and Texts (EMNLP 2024)](https://arxiv.org/pdf/2404.10710).
+The official repository which contains the code and model checkpoints for our paper [Autoregressive Pre-Training on Pixels and Texts (EMNLP 2024)](https://aclanthology.org/2024.emnlp-main.182.pdf).
 
 
 ## 🔥 News
@@ -137,15 +137,25 @@ bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_image.sh pretrain
 bash run/cross_lingual/xnli/train_en/dual_gpt/ft_dual_gpt_xnli_pair.sh pretrained_models/DualGPT
 ```
 ## Citation
-For attribution in academic contexts, please cite this work as:
 ```
-@misc{chai2024autoregressivepretrainingpixelstexts,
-  title = {Autoregressive Pre-Training on Pixels and Texts},
-  author = {Chai, Yekun and Liu, Qingyi and Xiao, Jingwu and Wang, Shuohuan and Sun, Yu and Wu, Hua},
-  year = {2024},
-  eprint = {2404.10710},
-  archiveprefix = {arXiv},
-  primaryclass = {cs.CL},
-  url = {https://arxiv.org/abs/2404.10710},
+@inproceedings{chai-etal-2024-autoregressive,
+    title = "Autoregressive Pre-Training on Pixels and Texts",
+    author = "Chai, Yekun  and
+      Liu, Qingyi  and
+      Xiao, Jingwu  and
+      Wang, Shuohuan  and
+      Sun, Yu  and
+      Wu, Hua",
+    editor = "Al-Onaizan, Yaser  and
+      Bansal, Mohit  and
+      Chen, Yun-Nung",
+    booktitle = "Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing",
+    month = nov,
+    year = "2024",
+    address = "Miami, Florida, USA",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.emnlp-main.182",
+    pages = "3106--3125",
+    abstract = "The integration of visual and textual information represents a promising direction in the advancement of language models. In this paper, we explore the dual modality of language{---}both visual and textual{---}within an autoregressive framework, pre-trained on both document images and texts. Our method employs a multimodal training strategy, utilizing visual data through next patch prediction with a regression head and/or textual data through next token prediction with a classification head. We focus on understanding the interaction between these two modalities and their combined impact on model performance. Our extensive evaluation across a wide range of benchmarks shows that incorporating both visual and textual data significantly improves the performance of pixel-based language models. Remarkably, we find that a unidirectional pixel-based model trained solely on visual data can achieve comparable results to state-of-the-art bidirectional models on several language understanding tasks. This work uncovers the untapped potential of integrating visual and textual modalities for more effective language modeling. We release our code, data, and model checkpoints at https://github.com/ernie-research/pixelgpt.",
 }
 ```
